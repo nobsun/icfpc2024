@@ -34,7 +34,23 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , doctest
+    , extra
+    , hspec
+    , main-tester
+    , multiset
+    , process
+    , random
+    , recursion-schemes
+    , time
+    , unicode-show
+    , utf8-string
+    , vector
   default-language: Haskell2010
 
 executable icfpc2024-exe
@@ -47,14 +63,31 @@ executable icfpc2024-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , doctest
+    , extra
+    , hspec
     , icfpc2024
+    , main-tester
+    , multiset
+    , process
+    , random
+    , recursion-schemes
+    , time
+    , unicode-show
+    , utf8-string
+    , vector
   default-language: Haskell2010
 
-test-suite icfpc2024-test
+test-suite icfpc2024-doctest
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: doctests.hs
   other-modules:
+      LibSpec
       Paths_icfpc2024
   autogen-modules:
       Paths_icfpc2024
@@ -62,6 +95,54 @@ test-suite icfpc2024-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , doctest
+    , extra
+    , hspec
     , icfpc2024
+    , main-tester
+    , multiset
+    , process
+    , random
+    , recursion-schemes
+    , time
+    , unicode-show
+    , utf8-string
+    , vector
+  default-language: Haskell2010
+
+test-suite icfpc2024-test
+  type: exitcode-stdio-1.0
+  main-is: spec.hs
+  other-modules:
+      LibSpec
+      Paths_icfpc2024
+  autogen-modules:
+      Paths_icfpc2024
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , doctest
+    , extra
+    , hspec
+    , icfpc2024
+    , main-tester
+    , multiset
+    , process
+    , random
+    , recursion-schemes
+    , time
+    , unicode-show
+    , utf8-string
+    , vector
   default-language: Haskell2010
