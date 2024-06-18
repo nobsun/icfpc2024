@@ -21,6 +21,22 @@ description:         Please see the README on GitHub at <https://github.com/msak
 
 dependencies:
 - base >= 4.7 && < 5
+- aeson
+- array
+- bytestring
+- containers
+- doctest
+- extra
+- hspec
+- main-tester
+- multiset
+- process
+- random
+- recursion-schemes
+- time
+- unicode-show
+- utf8-string
+- vector
 
 ghc-options:
 - -Wall
@@ -49,7 +65,7 @@ executables:
 
 tests:
   icfpc2024-test:
-    main:                Spec.hs
+    main:                spec.hs
     source-dirs:         test
     ghc-options:
     - -threaded
@@ -57,3 +73,14 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - icfpc2024
+
+  icfpc2024-doctest:
+    main:                doctests.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - icfpc2024
+    - doctest
