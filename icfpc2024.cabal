@@ -86,11 +86,6 @@ executable icfpc2024-exe
 test-suite icfpc2024-doctest
   type: exitcode-stdio-1.0
   main-is: doctests.hs
-  other-modules:
-      LibSpec
-      Paths_icfpc2024
-  autogen-modules:
-      Paths_icfpc2024
   hs-source-dirs:
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
