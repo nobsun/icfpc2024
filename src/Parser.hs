@@ -17,10 +17,19 @@ import Expr
 type Parser = Parsec Void [Token]
 
 
+{- $setup
+>>> :seti -XOverloadedStrings
+>>> import qualified Data.ByteString.Char8 as B8
+>>> let parse' p = parse p "<doctest>" . B8.words
+ -}
+
 bool :: Parser Bool
 bool = (single "T" *> pure True) <|> (single "F" *> pure False)
 
-
+{- |
+>>> parse' int "I/6"
+Right 1337
+ -}
 int :: Parser Integer
 int = try $ do
   b <- anySingle
@@ -29,6 +38,10 @@ int = try $ do
     Just bs -> pure (decodeBase94 bs)
 
 
+{- |
+>>> parse' str "SB%,,/}Q/2,$_"
+Right "Hello World!"
+ -}
 str :: Parser ByteString
 str = try $ do
   b <- anySingle
@@ -86,6 +99,22 @@ var = try $ do
     Just bs -> pure (decodeBase94 bs)
 
 
+{- |
+>>> parse' expr "U- I$"
+Right (EUnary Neg (EInt 3))
+>>> parse' expr "U! T"
+Right (EUnary Not (EBool True))
+>>> parse' expr "U# S4%34"
+Right (EUnary StrToInt (EStr "test"))
+>>> parse' expr "U$ I4%34"
+Right (EUnary IntToStr (EInt 15818151))
+>>> parse' expr "B+ I# I$"
+Right (EBinary Add (EInt 2) (EInt 3))
+>>> parse' expr "B- I$ I#"
+Right (EBinary Sub (EInt 3) (EInt 2))
+>>> parse' expr "B* I$ I#"
+Right (EBinary Mult (EInt 3) (EInt 2))
+ -}
 expr :: Parser Expr
 expr = asum
   [ EBool <$> bool
