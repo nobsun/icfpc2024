@@ -15,6 +15,7 @@ module Lib
 
 import Data.Char (chr, ord)
 import Data.Maybe (mapMaybe)
+import Data.List (concatMap)
 
 {- |
 「なんか関数」を標準出力に印字する
@@ -23,6 +24,14 @@ import Data.Maybe (mapMaybe)
 -}
 someFunc :: IO ()
 someFunc = putStrLn "なんか関数"
+
+parse :: String -> String
+parse = concatMap decode . words
+
+printMessage :: String -> IO ()
+printMessage f = do
+  s <- readFile f
+  putStrLn $ parse s
 
 {- |
 >>> int "/6"
