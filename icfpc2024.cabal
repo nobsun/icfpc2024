@@ -30,6 +30,7 @@ library
       Client
       Communicate
       Imports
+      Parser
   other-modules:
       Paths_icfpc2024
   autogen-modules:
@@ -46,6 +47,7 @@ library
     , filepath
     , http-client
     , http-client-tls
+    , megaparsec
     , mtl
     , process
     , random

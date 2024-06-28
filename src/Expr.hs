@@ -26,7 +26,7 @@ data Expr
   | EIf Expr !Expr Expr
   | ELambda Var Expr
   | EVar Var
-
+  deriving Show
 
 type Var = Int
 

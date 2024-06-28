@@ -48,6 +48,7 @@ library:
   - Client
   - Communicate
   - Imports
+  - Parser
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:
@@ -56,6 +57,7 @@ library:
   - vector
   - http-client
   - http-client-tls
+  - megaparsec
   # - extra
   # - multiset
   # - recursion-schemes
