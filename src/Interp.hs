@@ -52,7 +52,9 @@ interp rho = \ case
             Take -> pure (VStr $ BS.take (fromInteger n) s)
             Drop -> pure (VStr $ BS.drop (fromInteger n) s)
             _    -> pure VBottom
-        (VFun f, v) -> modify succ >> f (pure v)
+        (VFun f, v) -> case op of 
+            Apply -> modify succ >> f (pure v)
+            _     -> pure VBottom
         _ -> pure VBottom
     EIf e e1 e2 -> interp rho e >>= \ case
         VBool b | b         -> interp rho e1
