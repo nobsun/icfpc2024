@@ -24,6 +24,7 @@ dependencies:
 - array
 - bytestring
 - containers
+- transformers
 - mtl
 - filepath
 - process
@@ -45,6 +46,8 @@ library:
   - Communicate
   - Expr
   - Parser
+  - ParserLib
+  - CustomParser
   - Pretty
   - Eval
   other-modules: []
