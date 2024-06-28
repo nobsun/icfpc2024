@@ -40,11 +40,12 @@ library:
   source-dirs: src
   exposed-modules:
   - Lib
-  - Expr
+  - Imports
   - Client
   - Communicate
-  - Imports
+  - Expr
   - Parser
+  - Pretty
   - Eval
   other-modules: []
   generated-other-modules: Paths_icfpc2024
