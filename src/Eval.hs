@@ -39,12 +39,12 @@ unary env Not e = do
   (_, e') <- eval env e
   case e' of
     EBool b -> Right (env, EBool $ not b)
-    _       -> Left "Not applied to non-boolean"
+    _       -> Left $ "Not applied to non-boolean: e=" ++ show e'
 unary env Neg e = do
   (_, e') <- eval env e
   case e' of
     EInt i -> Right (env, EInt $ negate i)
-    _      -> Left "Neg applied to non-integer"
+    _      -> Left $ "Neg applied to non-integer: e=" ++ show e'
 unary env StrToInt e = do
   (_, e') <- eval env e
   case e' of
@@ -52,12 +52,12 @@ unary env StrToInt e = do
       where
         cs' = tail $ BS.unpack $ encodeStr cs
         i = fromIntegral $ foldl' (\acc c -> acc * 94 + ord c - ord '!') 0 cs'
-    _       -> Left "StrToInt applied to non-string"
+    _       -> Left $ "StrToInt applied to non-string: e=" ++ show e'
 unary env IntToStr e = do
   (_, e') <- eval env e
   case e' of
     EInt i -> Right (env, EStr $ cultToHuman $ encodeBase94 i)
-    _      -> Left "IntToStr applied to non-integer"
+    _      -> Left $ "IntToStr applied to non-integer: e=" ++ show e'
 
 binary :: Env -> BinOp -> Expr -> Expr -> Either String (Env, Expr)
 binary env Add e1 e2 = do
@@ -65,79 +65,79 @@ binary env Add e1 e2 = do
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EInt $ i1 + i2)
-    _                  -> Left "Add applied to non-integers"
+    _                  -> Left $ "Add applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2'
 binary env Sub e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EInt $ i1 - i2)
-    _                  -> Left "Sub applied to non-integers"
+    _                  -> Left $ "Sub applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2'
 binary env Mult e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EInt $ i1 * i2)
-    _                  -> Left "Mult applied to non-integers"
+    _                  -> Left $ "Mult applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Div e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EInt $ i1 `quot` i2)
-    _                  -> Left "Div applied to non-integers"
+    _                  -> Left $ "Div applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2'
 binary env Mod e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EInt $ i1 `rem` i2)
-    _                  -> Left "Mod applied to non-integers"
+    _                  -> Left $ "Mod applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2'
 binary env Lt e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EBool $ i1 < i2)
-    _                  -> Left "Lt applied to non-integers"
+    _                  -> Left $ "Lt applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Gt e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EBool $ i1 > i2)
-    _                  -> Left "Gt applied to non-integers"
+    _                  -> Left $ "Gt applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Eql e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, EBool $ i1 == i2)
-    _                  -> Left "Eql applied to non-integers"
+    _                  -> Left $ "Eql applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2'
 binary env Or e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EBool b1, EBool b2) -> Right (env, EBool $ b1 || b2)
-    _                    -> Left "Or applied to non-booleans"
+    _                    -> Left $ "Or applied to non-booleans: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env And e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EBool b1, EBool b2) -> Right (env, EBool $ b1 && b2)
-    _                    -> Left "And applied to non-booleans"
+    _                    -> Left $ "And applied to non-booleans: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Concat e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EStr s1, EStr s2) -> Right (env, EStr $ BS.append s1 s2)
-    _                  -> Left "Concat applied to non-strings"
+    _                  -> Left $ "Concat applied to non-strings: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Take e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i, EStr s) -> Right (env, EStr $ BS.take (fromIntegral i) s)
-    _                -> Left "Take applied to non-integer and non-string"
+    _                -> Left $ "Take applied to non-integer and non-string: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Drop e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
     (EInt i, EStr s) -> Right (env, EStr $ BS.drop (fromIntegral i) s)
-    _                -> Left "Drop applied to non-integer and non-string"
+    _                -> Left $ "Drop applied to non-integer and non-string: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Apply e1 e2 = do
   case e1 of
     EBinary _ _ _ -> do
@@ -147,7 +147,7 @@ binary env Apply e1 e2 = do
       (_, e1') <- eval env e1
       eval env (EBinary Apply e1' e2)
     ELambda v e'  -> let env' = (v, e2):env in eval (id $? env') $? e'
-    _             -> Left ("Apply applied to non-lambda: " ++ show e1 ++ " Env: " ++ show env)
+    _             -> Left $ "Apply applied to non-lambda: e1=" ++ show e1 ++ ",e2=" ++ show e2 ++ ",env=" ++ show env
 
 
 -----
@@ -190,6 +190,18 @@ _testEval = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
 
 -- Limit
 _testLim = test (EInt 1) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
+
+-- I combinator
+-- I 42
+_testI = test (EInt 42) "B$ L# v# IK"
+
+-- S combinator
+-- S K K 42
+_testS = test (EInt 42) "B$ B$ B$ L# L$ L% B$ B$ v# v% B$ v$ v% L# L$ v# L# L$ v# IK"
+
+-- K combinator
+-- K 42 3
+_testK = test (EInt 42) "B$ B$ L# L$ v# IK I!"
 
 _p21 :: BS.ByteString
 _p21 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
