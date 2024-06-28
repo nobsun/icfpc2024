@@ -130,13 +130,13 @@ binary env Take e1 e2 = do
   (e1', env')  <- eval env e1
   (e2', env'') <- eval env' e2
   case (e1', e2') of
-    (EInt i, EStr s) -> Right (EStr $ BS.take (fromIntegral i) s, env)
+    (EInt i, EStr s) -> Right (EStr $ BS.take (fromIntegral i) s, env'')
     _                -> Left "Take applied to non-integer and non-string"
 binary env Drop e1 e2 = do
   (e1', env')  <- eval env e1
   (e2', env'') <- eval env' e2
   case (e1', e2') of
-    (EInt i, EStr s) -> Right (EStr $ BS.drop (fromIntegral i) s, env)
+    (EInt i, EStr s) -> Right (EStr $ BS.drop (fromIntegral i) s, env'')
     _                -> Left "Drop applied to non-integer and non-string"
 binary env Apply e1 e2 = do
   case e1 of
