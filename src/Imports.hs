@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-compat-unqualified-imports#-}
+
 module Imports
   ( module Control.Applicative
   , module Control.Monad
