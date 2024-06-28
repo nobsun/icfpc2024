@@ -14,20 +14,6 @@ import Parser (parseExpr)
 
 token = "Bearer 39572a1c-b861-4e57-8405-b9fda4f8cec3"
 
-{--
-postEncoded :: String -> IO String
-postEncoded str = do
-  manager <- newManager tlsManagerSettings
-  initReq <- parseRequest "https://boundvariable.space/communicate"
-  let req = initReq { method = "POST"
-                    , requestHeaders = [( "Authorization"
-                                        , token)]
-                    , requestBody = RequestBodyLBS (LBS.pack str)
-                    }
-  resp <- httpLbs req manager
-  let body = responseBody resp
-  return $ decode $ tail $ LBS.unpack body
---}
 
 simplePost raw = do
   let msg = encodeStr $ BS.pack raw
@@ -48,7 +34,3 @@ simplePost raw = do
   print $ BS.pack "RECV: " <> body
   print "===================="
   return $ parseExpr "simple" $ BS.words body
-
-
-res = readFile "response.txt"
-
