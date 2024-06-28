@@ -32,4 +32,4 @@ simplePost raw = do
   print "===================="
   print $ BS.pack "RECV: " <> body
   print "===================="
-  return $ parseExpr "simple" $ BS.words body
+  return $ parseExpr "simple" body

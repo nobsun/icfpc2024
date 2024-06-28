@@ -110,5 +110,5 @@ expr = asum
   ]
 
 
-parseExpr :: String -> [Token] -> Either (ParseErrorBundle [ByteString] Void) Expr
-parseExpr = parse expr
+parseExpr :: String -> BS.ByteString -> Either (ParseErrorBundle [ByteString] Void) Expr
+parseExpr fs = parse expr fs . BS.words
