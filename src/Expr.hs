@@ -26,7 +26,7 @@ data Expr
   | EStr ByteString
   | EUnary !UOp Expr
   | EBinary !BinOp Expr Expr
-  | EIf Expr !Expr Expr
+  | EIf Expr Expr Expr
   | ELambda !Var Expr
   | EVar !Var
   deriving (Show, Eq)
