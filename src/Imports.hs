@@ -6,6 +6,7 @@ module Imports
   , module Control.Monad.Trans
   , module Control.Monad.Except
   , module Control.Monad.Reader
+  , module Control.Monad.State
   , module Data.Functor
   , module Data.Function
   , module Data.Char
@@ -25,6 +26,7 @@ import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Monad.State
 import Data.Functor
 import Data.Function
 import Data.Char
