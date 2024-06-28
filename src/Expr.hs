@@ -25,9 +25,10 @@ data Expr
   | EUnary !UOp Expr
   | EBinary !BinOp Expr Expr
   | EIf Expr !Expr Expr
-  | ELambda Var Expr
-  | EVar Var
+  | ELambda !Var Expr
+  | EVar !Var
   deriving Show
+
 
 type Var = Int
 
