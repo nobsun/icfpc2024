@@ -1,10 +1,23 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Communicate where
 
+import qualified Data.ByteString.Char8 as B8
 import qualified Data.ByteString.Lazy.Char8 as L8
 import System.Process (readProcess)
 
-communicateFile :: FilePath -> IO String
-communicateFile = (communicate =<<) . L8.readFile
+import Imports hiding (get)
+import CustomParser (parseExpr)
+import Expr
 
-communicate :: L8.ByteString -> IO String
-communicate = readProcess "./api/comm.sh" [] . L8.unpack
+communicateFile :: FilePath -> IO String
+communicateFile = (communicate_ =<<) . L8.readFile
+
+communicate :: L8.ByteString -> IO Expr
+communicate req = either fail pure . parseExpr . B8.pack  =<< communicate_ req
+
+communicate_ :: L8.ByteString -> IO String
+communicate_ = readProcess "./api/comm.sh" [] . L8.unpack
+
+get :: String -> IO Expr
+get x = communicate $ L8.fromChunks $ encode $ EStr $ "get " <> fromString x
