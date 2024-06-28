@@ -20,7 +20,7 @@ bool = (single "T" *> pure True) <|> (single "F" *> pure False)
 
 
 int :: Parser Integer
-int = do
+int = try $ do
   b <- anySingle
   case BS.stripPrefix "I" b of
     Nothing -> empty
@@ -28,7 +28,7 @@ int = do
 
 
 str :: Parser ByteString
-str = do
+str = try $ do
   b <- anySingle
   case BS.stripPrefix "S" b of
     Nothing -> empty
@@ -41,7 +41,7 @@ str = do
 
 
 uOp :: Parser UOp
-uOp = asum $ map try
+uOp = asum
   [ single "U-" *> pure Neg
   , single "U!" *> pure Not
   , single "U#" *> pure StrToInt
@@ -50,7 +50,7 @@ uOp = asum $ map try
 
 
 binOp :: Parser BinOp
-binOp = asum $ map try
+binOp = asum
   [ single "B+" *> pure Add
   , single "B-" *> pure Sub
   , single "B*" *> pure Mult
