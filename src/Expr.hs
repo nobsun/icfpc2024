@@ -6,6 +6,7 @@ module Expr
   , BinOp (..)
   , Token
   , encode
+  , encodeStr
   , encodeBase94
   , decodeBase94
   ) where
