@@ -42,6 +42,10 @@ ghc-options:
 
 library:
   source-dirs: src
+  exposed-modules:
+  - Lib
+  other-modules: []
+  generated-other-modules: Paths_icfpc2024
   dependencies:
   - aeson
   - random
