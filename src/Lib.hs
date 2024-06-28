@@ -34,7 +34,7 @@ simplePost raw = do
                     }
   resp <- httpLbs req manager
   let body = responseBody resp
-  putStrLn $ decode $ LBS.unpack body
+  putStrLn $ decode $ tail $ LBS.unpack body
 
 
 {- |
