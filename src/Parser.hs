@@ -110,5 +110,5 @@ expr = asum
   ]
 
 
-parseExpr :: [ByteString] -> Maybe Expr
+parseExpr :: [Token] -> Maybe Expr
 parseExpr = parseMaybe expr
