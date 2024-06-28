@@ -11,8 +11,13 @@ eval e = case e of
   EBool b -> Right e
   EInt i  -> Right e
   EStr s  -> Right e
-  EUnary op e -> unary op e
-  EBinary op e1 e2 -> binary op e1 e2
+  EUnary op e -> do
+    e' <- eval e
+    unary op e'
+  EBinary op e1 e2 -> do
+    e1' <- eval e1
+    e2' <- eval e2
+    binary op e1' e2'
 
 unary :: UOp -> Expr -> Either String Expr
 unary Not e = case e of
@@ -42,10 +47,10 @@ binary Mult e1 e2 = case (e1, e2) of
     (EInt i1, EInt i2) -> Right $ EInt $ i1 * i2
     _                  -> Left "Mult applied to non-integers"
 binary Div e1 e2 = case (e1, e2) of
-    (EInt i1, EInt i2) -> Right $ EInt $ i1 `div` i2
+    (EInt i1, EInt i2) -> Right $ EInt $ i1 `quot` i2
     _                  -> Left "Div applied to non-integers"
 binary Mod e1 e2 = case (e1, e2) of
-    (EInt i1, EInt i2) -> Right $ EInt $ i1 `mod` i2
+    (EInt i1, EInt i2) -> Right $ EInt $ i1 `rem` i2
     _                  -> Left "Mod applied to non-integers"
 binary Lt e1 e2 = case (e1, e2) of
     (EInt i1, EInt i2) -> Right $ EBool $ i1 < i2
