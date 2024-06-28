@@ -9,7 +9,7 @@ import Debug.Trace (trace)
 import Parser (parseExpr)
 import Expr
 f $? x = let v = f x
-             msg = "{- " ++ show x ++ " => " ++ show v ++ " -}"
+             msg = "{- " ++ show x ++ " => " ++ show v ++ " -}\n\n"
          in trace msg v
 
 
@@ -158,60 +158,67 @@ test expected s = do
   (expected == actual, expected, actual)
 
 -- Unary
-_test1 = test (EInt (-3)) "U- I$"
-_test2 = test (EBool False) "U! T"
-_test3 = test (EInt 15818151) "U# S4%34"
-_test4 = test (EStr "test") "U$ I4%34"
+_testNeg = test (EInt (-3)) "U- I$"
+_testNot = test (EBool False) "U! T"
+_testI2S = test (EInt 15818151) "U# S4%34"
+_testS2I = test (EStr "test") "U$ I4%34"
 
 -- Binary
-_test5 = test (EInt 5) "B+ I# I$"
-_test6 = test (EInt 1) "B- I$ I#"
-_test7 = test (EInt 6) "B* I$ I#"
-_test8 = test (EInt (-3)) "B/ U- I( I#"
-_test9 = test (EInt (-1)) "B% U- I( I#"
-_test10 = test (EBool False) "B< I$ I#"
-_test11 = test (EBool True) "B> I$ I#"
-_test12 = test (EBool False) "B= I$ I#"
-_test13 = test (EBool True) "B| T F"
-_test14 = test (EBool False) "B& T F"
-_test15 = test (EStr "test") "B. S4% S34"
-_test16 = test (EStr "tes") "BT I$ S4%34"
-_test17 = test (EStr "t") "BD I$ S4%34"
+_testAdd  = test (EInt 5) "B+ I# I$"
+_testSub  = test (EInt 1) "B- I$ I#"
+_testMul  = test (EInt 6) "B* I$ I#"
+_testQuot = test (EInt (-3)) "B/ U- I( I#"
+_testRem  = test (EInt (-1)) "B% U- I( I#"
+_testLt   = test (EBool False) "B< I$ I#"
+_testGt   = test (EBool True) "B> I$ I#"
+_testEq   = test (EBool False) "B= I$ I#"
+_testOr   = test (EBool True) "B| T F"
+_testAnd  = test (EBool False) "B& T F"
+_testComp = test (EStr "test") "B. S4% S34"
+_testTake = test (EStr "tes") "BT I$ S4%34"
+_testDrop = test (EStr "t") "BD I$ S4%34"
 
 -- If
-_test18 = test (EStr "no") "? B> I# I$ S9%3 S./"
+_testIf = test (EStr "no") "? B> I# I$ S9%3 S./"
 
 -- Lambda
-_test19 = test (EStr "Hello World!") "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
+_testLam = test (EStr "Hello World!") "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
 
 
 -- Evaluation
-_test20 = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
+_testEval = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
 
 -- Limit
-_test21 = test (EInt 1) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
+_testLim = test (EInt 1) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
 
-_testAll = and $ map fst3 [ _test1,
-                            _test2,
-                            _test3,
-                            _test4,
-                            _test5,
-                            _test6,
-                            _test7,
-                            _test8,
-                            _test9,
-                            _test10,
-                            _test11,
-                            _test12,
-                            _test13,
-                            _test14,
-                            _test15,
-                            _test16,
-                            _test17,
-                            _test18,
-                            -- _test19,
-                            _test20
-                            -- _test21
+_p21 :: BS.ByteString
+_p21 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
+{--
+_e21' = ((\v1 -> ((\v2 -> v1 (v2 v2)) (\v2 -> v1 (v2 v2))))
+         (\v1 -> (\v2 -> if v2 == 0 then 1 else (\v3 -> (v1 v3) + (v1 v3)) (v2 - 1)))
+        ) 4
+--}
+_testAll = and $ map fst3 [ _testNeg,
+                            _testNot,
+                            _testI2S,
+                            _testS2I,
+                            _testAdd,
+                            _testSub,
+                            _testMul,
+                            _testQuot,
+                            _testRem,
+                            _testLt,
+                            _testGt,
+                            _testEq,
+                            _testOr,
+                            _testAnd,
+                            _testComp,
+                            _testTake,
+                            _testDrop,
+                            _testIf,
+                            _testLam,
+                            _testEval,
+                            _testLim
                           ]
           where fst3 (a, _, _) = a
 
