@@ -27,6 +27,7 @@ library
   exposed-modules:
       Lib
       Expr
+      Client
   other-modules:
       Paths_icfpc2024
   autogen-modules:
