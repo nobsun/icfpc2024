@@ -29,7 +29,7 @@ postEncoded str = do
   return $ decode $ tail $ LBS.unpack body
 --}
 
-simplePost :: String -> IO (Maybe Expr)
+
 simplePost raw = do
   let msg = encodeStr $ BS.pack raw
   print "===================="
@@ -48,7 +48,7 @@ simplePost raw = do
   print "===================="
   print $ BS.pack "RECV: " <> body
   print "===================="
-  return $ parseExpr $ BS.words body
+  return $ parseExpr "simple" $ BS.words body
 
 
 res = readFile "response.txt"

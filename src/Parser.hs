@@ -110,5 +110,5 @@ expr = asum
   ]
 
 
-parseExpr :: [Token] -> Maybe Expr
-parseExpr = parseMaybe expr
+parseExpr :: String -> [Token] -> Either (ParseErrorBundle [ByteString] Void) Expr
+parseExpr = parse expr
