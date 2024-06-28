@@ -9,6 +9,8 @@ module Expr
   , encodeStr
   , encodeBase94
   , decodeBase94
+  , humanToCult
+  , cultToHuman
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -94,12 +96,29 @@ encodeNat n = "I" <> encodeBase94 n
 "SB%,,/}Q/2,$_"
  -}
 encodeStr :: ByteString -> Token
-encodeStr s = "S" <> BS.pack [table Map.! c | c <- BS.unpack s]
+encodeStr s = "S" <> humanToCult s
   where
     table :: Map Char Char
     table = Map.fromList $
       zip "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
           "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+
+humanToCult :: ByteString -> ByteString
+humanToCult s = BS.pack [table Map.! c | c <- BS.unpack s]
+  where
+    table :: Map Char Char
+    table = Map.fromList $
+      zip "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
+          "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+
+cultToHuman :: ByteString -> ByteString
+cultToHuman s = BS.pack [table Map.! c | c <- BS.unpack s]
+  where
+    table :: Map Char Char
+    table = Map.fromList $
+      zip "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
+
 
 
 encodeUOp :: UOp -> Token
