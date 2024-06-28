@@ -15,7 +15,27 @@ module Lib
 
 import Data.Char (chr, ord)
 import Data.Maybe (mapMaybe)
-import Data.List (concatMap)
+import qualified Data.ByteString.Lazy.Char8 as LBS
+import Network.HTTP.Client
+import Network.HTTP.Client.TLS (tlsManagerSettings)
+import Network.HTTP.Client (defaultManagerSettings, RequestBody (RequestBodyLBS))
+
+simplePost :: String -> IO ()
+simplePost raw = do
+  let msg = encode' raw
+  
+  putStrLn msg
+  
+  manager <- newManager tlsManagerSettings
+  initReq <- parseRequest "https://boundvariable.space/communicate"
+  let req = initReq { method = "POST"
+                    , requestHeaders = [("Authorization", "Bearer 39572a1c-b861-4e57-8405-b9fda4f8cec3")]
+                    , requestBody = RequestBodyLBS (LBS.pack msg)
+                    }
+  resp <- httpLbs req manager
+  let body = responseBody resp
+  putStrLn $ decode $ tail $ LBS.unpack body
+
 
 {- |
 「なんか関数」を標準出力に印字する
@@ -24,6 +44,8 @@ import Data.List (concatMap)
 -}
 someFunc :: IO ()
 someFunc = putStrLn "なんか関数"
+
+
 
 parse :: String -> String
 parse = concatMap decode . words
@@ -47,6 +69,8 @@ encode :: String -> String
 encode = mapMaybe $ flip lookup dict'
   where dict' = map swap dict
         swap (a, b) = (b, a)
+
+encode' = ('S':) . encode
 
 dict = zip cultCode humanReadable
   where
