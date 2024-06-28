@@ -44,6 +44,16 @@ decodeInt :: String -> Either String Integer
 decodeInt s = foldl' base 0 . map fromIntegral <$> zipWithM decodeDigit [1 :: Int ..] s
   where base a x = a * 94 + x
 
+{- |
+>>> encodeInt 1337
+"/6"
+ -}
+encodeInt :: Integer -> String
+encodeInt i0 = map (arrayFromDigit !) $ go [] i0
+  where go a i  | q > 0 || q == 0 && r > 0  = go (fromIntegral r:a) q
+                | otherwise                 = a
+          where (q, r) = i `quotRem` 94
+
 decodeDigit :: Show a => a -> Char -> Either String Word8
 decodeDigit ix c = maybe (Left $ "int decode: unknown char " ++ show c ++ " at " ++ show ix) Right $ decodeDigit' c
 
