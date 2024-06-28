@@ -24,6 +24,7 @@ dependencies:
 - array
 - bytestring
 - containers
+- mtl
 - filepath
 - process
 - time
