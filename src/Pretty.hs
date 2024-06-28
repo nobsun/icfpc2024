@@ -95,7 +95,7 @@ pprIf :: PprFix -> Expr -> Expr -> Expr -> PPString
 pprIf pf e1 e2 e3 = "if" <+> parenExpr pf e1 <+> parenExpr pf e2 <+> parenExpr pf e3
 
 pprLambda :: PprFix -> Var -> Expr -> PPString
-pprLambda pf v e = pprVar v <+> "->" <+> pprExpr pf e
+pprLambda pf v e = "λ" <+> pprVar v <+> "->" <+> pprExpr pf e
 
 pprVar :: Var -> PPString
 pprVar v = "v" <> showpp v
