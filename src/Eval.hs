@@ -29,7 +29,7 @@ eval env e = case e of
       EBool True  -> eval env' t
       EBool False -> eval env' e
       _           -> Left "If condition is not a boolean"
-  ELambda v e -> Right (ELambda v e, env) -- TODO
+  ELambda v b -> Right (ELambda v b, env) -- TODO
   EVar v      -> maybe (Left msg) (eval env) $ lookup v env
     where
       msg = "Variable " ++ show v ++ " not found"
@@ -138,9 +138,10 @@ binary env Drop e1 e2 = do
   case (e1', e2') of
     (EInt i, EStr s) -> Right (EStr $ BS.drop (fromIntegral i) s, env)
     _                -> Left "Drop applied to non-integer and non-string"
-binary env Apply e1 e2 = case e1 of
+binary env Apply e1 e2 = do
+  case e1 of
     ELambda v e1' -> let env' = (v, e2) : env in eval env' e1'
-    _           -> Left "Apply applied to non-lambda"
+    _           -> Left ("Apply applied to non-lambda: " ++ show e1)
 
 
 -----
@@ -151,32 +152,35 @@ test exp s = do
   actual == exp
 
 -- Unary
-test1 = test (EInt (-3)) "U- I$"
-test2 = test (EBool False) "U! T"
-test3 = test (EInt 15818151) "U# S4%34"
-test4 = test (EStr "test") "U$ I4%34"
+_test1 = test (EInt (-3)) "U- I$"
+_test2 = test (EBool False) "U! T"
+_test3 = test (EInt 15818151) "U# S4%34"
+_test4 = test (EStr "test") "U$ I4%34"
 
 -- Binary
-test5 = test (EInt 5) "B+ I# I$"
-test6 = test (EInt 1) "B- I$ I#"
-test7 = test (EInt 6) "B* I$ I#"
-test8 = test (EInt (-3)) "B/ U- I( I#"
-test9 = test (EInt (-1)) "B% U- I( I#"
-test10 = test (EBool False) "B< I$ I#"
-test11 = test (EBool True) "B> I$ I#"
-test12 = test (EBool False) "B= I$ I#"
-test13 = test (EBool True) "B| T F"
-test14 = test (EBool False) "B& T F"
-test15 = test (EStr "test") "B. S4% S34"
-test16 = test (EStr "tes") "BT I$ S4%34"
-test17 = test (EStr "t") "BD I$ S4%34"
+_test5 = test (EInt 5) "B+ I# I$"
+_test6 = test (EInt 1) "B- I$ I#"
+_test7 = test (EInt 6) "B* I$ I#"
+_test8 = test (EInt (-3)) "B/ U- I( I#"
+_test9 = test (EInt (-1)) "B% U- I( I#"
+_test10 = test (EBool False) "B< I$ I#"
+_test11 = test (EBool True) "B> I$ I#"
+_test12 = test (EBool False) "B= I$ I#"
+_test13 = test (EBool True) "B| T F"
+_test14 = test (EBool False) "B& T F"
+_test15 = test (EStr "test") "B. S4% S34"
+_test16 = test (EStr "tes") "BT I$ S4%34"
+_test17 = test (EStr "t") "BD I$ S4%34"
 
 -- If
-test18 = test (EStr "no") "? B> I# I$ S9%3 S./"
+_test18 = test (EStr "no") "? B> I# I$ S9%3 S./"
 
 -- Lambda
-test19 = test (EStr "Hello World!") "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
+_test19 = test (EStr "Hello World!") "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
 
 
 -- Evaluation
-test20 = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
+_test20 = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
+
+-- Limit
+_test21 = test (EInt 1) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
