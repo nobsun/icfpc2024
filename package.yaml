@@ -44,6 +44,7 @@ library:
   source-dirs: src
   exposed-modules:
   - Lib
+  - Expr
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:

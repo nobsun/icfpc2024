@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Expr
   other-modules:
       Paths_icfpc2024
   autogen-modules:
