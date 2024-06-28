@@ -48,7 +48,7 @@ pprNat :: Integer -> PPString
 pprNat = showpp
 
 pprStr :: ByteString -> PPString
-pprStr = pps . B8.unpack
+pprStr = dquote . pps . B8.unpack
 
 pprUnary :: PprFix -> UOp -> Expr -> PPString
 pprUnary pf u e = pprUOp u <+> parenExpr pf e
