@@ -28,6 +28,7 @@ library
       Lib
       Expr
       Client
+      Communicate
       Imports
   other-modules:
       Paths_icfpc2024

@@ -46,6 +46,7 @@ library:
   - Lib
   - Expr
   - Client
+  - Communicate
   - Imports
   other-modules: []
   generated-other-modules: Paths_icfpc2024
