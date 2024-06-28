@@ -2,53 +2,103 @@ module LangICFP where
 
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Array
 
 import Imports
 
 decodeFile :: FilePath -> IO String
-decodeFile = (either fail pure . decode =<<) . readFile
+decodeFile = (either fail pure . decodeString =<<) . readFile
 
 encodeFile :: FilePath -> IO String
-encodeFile = (either fail pure . encode =<<) . readFile
+encodeFile = (either fail pure . encodeString =<<) . readFile
+
+-- toReadable :: String -> Either String String
+-- toReadable = decodeString
+
+-- fromReadable :: String -> Either String String
+-- fromReadable = encodeString
 
 ---
 
-toReadable :: String -> Either String String
-toReadable = decode
-
-decode :: String -> Either String String
-decode s = zipWithM decodeChar [1 :: Int ..] s
-
-fromReadable :: String -> Either String String
-fromReadable = encode
-
-encode :: String -> Either String String
-encode s = zipWithM encodeChar [1 :: Int ..] s
+data Exp
+  = EBool Bool
+  | EInt Integer
+  | EString String
+  deriving Show
 
 ---
 
-decodeChar' :: Char -> Maybe Char
-decodeChar' c = Map.lookup c mapToReadable
+decodeBool :: Char -> String -> Maybe Exp
+decodeBool s _ = case s of
+  'T' -> Just $ EBool True
+  'F' -> Just $ EBool False
+  _   -> Nothing
+
+---
+
+{- |
+>>> decodeInt "/6"
+Right 1337
+ -}
+decodeInt :: String -> Either String Integer
+decodeInt s = foldl' base 0 . map fromIntegral <$> zipWithM decodeDigit [1 :: Int ..] s
+  where base a x = a * 94 + x
+
+decodeDigit :: Show a => a -> Char -> Either String Word8
+decodeDigit ix c = maybe (Left $ "int decode: unknown char " ++ show c ++ " at " ++ show ix) Right $ decodeDigit' c
+
+decodeDigit' :: Char -> Maybe Word8
+decodeDigit' c = Map.lookup c mapToDigit
+
+encodeDigit :: (Show ix, Ord a, Integral a, Show a) => ix -> a -> Either String Char
+encodeDigit ix d = maybe (Left $ "string encode: out-of-range digit " ++ show d ++ " at " ++ show ix) Right $ encodeDigit' d
+
+encodeDigit' :: (Ord a, Integral a) => a -> Maybe Char
+encodeDigit' ix
+  | ix < 0     = Nothing
+  | 93 < ix    = Nothing
+  | otherwise  = Just $ arrayFromDigit ! fromIntegral ix
+
+mapToDigit :: Map Char Word8
+mapToDigit = Map.fromList $ zip codeChars [0..93]
+
+arrayFromDigit :: Array Int Char
+arrayFromDigit = listArray (0, 93) ['!' .. '~']
+
+-----
+
+decodeString :: String -> Either String String
+decodeString s = zipWithM decodeChar [1 :: Int ..] s
+
+encodeString :: String -> Either String String
+encodeString s = zipWithM encodeChar [1 :: Int ..] s
+
+---
 
 decodeChar :: Show a => a -> Char -> Either String Char
-decodeChar ix c = maybe (Left $ "icfp decode: unknown char " ++ show c ++ " at " ++ show ix) Right $ decodeChar' c
+decodeChar ix c = maybe (Left $ "string decode: unknown char " ++ show c ++ " at " ++ show ix) Right $ decodeChar' c
 
-encodeChar' :: Char -> Maybe Char
-encodeChar' c = Map.lookup c mapFromReadable
+decodeChar' :: Char -> Maybe Char
+decodeChar' c = Map.lookup c mapToString
 
 encodeChar :: Show a => a -> Char -> Either String Char
-encodeChar ix c = maybe (Left $ "icfp encode: unknown char " ++ show c ++ " at " ++ show ix) Right $ encodeChar' c
+encodeChar ix c = maybe (Left $ "string encode: unknown char " ++ show c ++ " at " ++ show ix) Right $ encodeChar' c
+
+encodeChar' :: Char -> Maybe Char
+encodeChar' c = Map.lookup c mapFromString
 
 ---
 
-mapToReadable :: Map Char Char
-mapToReadable = Map.fromList $ zip boundVariableCult humanReadable
+mapToString :: Map Char Char
+mapToString = Map.fromList $ zip codeChars stringChars
 
-mapFromReadable :: Map Char Char
-mapFromReadable = Map.fromList $ zip humanReadable boundVariableCult
+mapFromString :: Map Char Char
+mapFromString = Map.fromList $ zip stringChars codeChars
 
-boundVariableCult :: String
-boundVariableCult = map chr [33..126]
+stringChars :: String
+stringChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
 
-humanReadable :: String
-humanReadable = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
+---
+
+codeChars :: String
+codeChars = ['!' .. '~'] {- 33 - 126 -}
