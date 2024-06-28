@@ -50,6 +50,8 @@ library:
   - aeson
   - random
   - vector
+  - http-client
+  - http-client-tls
   # - extra
   # - multiset
   # - recursion-schemes
