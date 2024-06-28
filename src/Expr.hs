@@ -12,11 +12,14 @@ module Expr
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import Data.List (unfoldr)
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 
 
 data Expr
   = EBool !Bool
   | EInt !Integer
+  | EStr ByteString
   | EUnary !UOp Expr
   | EBinary !BinOp Expr Expr
   | EIf Expr !Expr Expr
@@ -59,6 +62,7 @@ type Token = ByteString
 encode :: Expr -> [Token]
 encode (EBool b) = [encodeBool b]
 encode (EInt n) = [encodeNat n]
+encode (EStr s) = [encodeStr s]
 encode (EUnary op e) = encodeUOp op : encode e
 encode (EBinary op e1 e2) = encodeBinOp op : encode e1 ++ encode e2
 encode (EIf e1 e2 e3) = tokenIf : encode e1 ++ encode e2 ++ encode e3
@@ -73,6 +77,15 @@ encodeBool False = "F"
 
 encodeNat :: Integer -> Token
 encodeNat n = "I" <> encodeBase94 n
+
+
+encodeStr :: ByteString -> Token
+encodeStr s = "S" <> BS.pack [table Map.! c | c <- BS.unpack s]
+  where
+    table :: Map Char Char
+    table = Map.fromList $
+      zip "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
+          "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
 
 encodeUOp :: UOp -> Token
