@@ -43,7 +43,7 @@ library:
   - Lib
   - Imports
   - Client
-  - Communicate
+  - CommunicateIO
   - Expr
   - Parser
   - ParserLib
