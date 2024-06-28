@@ -19,6 +19,7 @@ module Imports
   , module Data.String
   , module Data.Word
   , module Numeric
+  , module Data.ByteString
   ) where
 
 import Control.Applicative
@@ -39,3 +40,4 @@ import Data.Ord
 import Data.String
 import Data.Word
 import Numeric
+import Data.ByteString (ByteString)
