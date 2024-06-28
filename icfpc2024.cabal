@@ -41,13 +41,13 @@ library
     , bytestring
     , containers
     , filepath
+    , http-client
+    , http-client-tls
     , mtl
     , process
     , random
     , time
     , vector
-    , http-client
-    , http-client-tls
   default-language: Haskell2010
 
 executable icfpc2024-exe
