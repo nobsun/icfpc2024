@@ -11,4 +11,9 @@
 import Test.DocTest
 
 main :: IO ()
-main = doctest ["src/Lib.hs"]
+main =
+  doctest
+  [ "-isrc"
+  , "src/Lib.hs"
+  , "src/LangICFP.hs"
+  ]
