@@ -90,27 +90,27 @@ encodeStr s = "S" <> BS.pack [table Map.! c | c <- BS.unpack s]
 
 
 encodeUOp :: UOp -> Token
-encodeUOp Neg = "-"
-encodeUOp Not = "!"
-encodeUOp StrToInt = "#"
-encodeUOp IntToStr = "$"
+encodeUOp Neg = "U-"
+encodeUOp Not = "U!"
+encodeUOp StrToInt = "U#"
+encodeUOp IntToStr = "U$"
 
 
 encodeBinOp :: BinOp -> Token
-encodeBinOp Add    = "+"
-encodeBinOp Sub    = "-"
-encodeBinOp Mult   = "*"
-encodeBinOp Div    = "/"
-encodeBinOp Mod    = "%"
-encodeBinOp Lt     = "<"
-encodeBinOp Gt     = ">"
-encodeBinOp Eql    = "="
-encodeBinOp Or     = "|"
-encodeBinOp And    = "&"
-encodeBinOp Concat = "."
-encodeBinOp Take   = "T"
-encodeBinOp Drop   = "D"
-encodeBinOp Apply  = "$"
+encodeBinOp Add    = "B+"
+encodeBinOp Sub    = "B-"
+encodeBinOp Mult   = "B*"
+encodeBinOp Div    = "B/"
+encodeBinOp Mod    = "B%"
+encodeBinOp Lt     = "B<"
+encodeBinOp Gt     = "B>"
+encodeBinOp Eql    = "B="
+encodeBinOp Or     = "B|"
+encodeBinOp And    = "B&"
+encodeBinOp Concat = "B."
+encodeBinOp Take   = "BT"
+encodeBinOp Drop   = "BD"
+encodeBinOp Apply  = "B$"
 
 
 tokenIf :: Token
