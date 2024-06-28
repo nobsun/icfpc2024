@@ -31,7 +31,7 @@ someFunc = putStrLn "なんか関数"
 int :: String -> Int
 int = foldl (\acc c -> acc * 94 + ord c - ord '!') 0
 
--- str :: String -> String
+str :: String -> String
 str = mapMaybe $ flip lookup dict
 
 dict = zip cultCode humanReadable
