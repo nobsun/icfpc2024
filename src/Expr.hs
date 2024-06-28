@@ -7,6 +7,7 @@ module Expr
   , Token
   , encode
   , encodeBase94
+  , decodeBase94
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -133,3 +134,7 @@ encodeBase94 n = BS.pack (reverse (unfoldr f n))
      f x =
        case x `divMod` 94 of
          (q, r) -> Just (toEnum (fromIntegral (r + 33)), q)
+
+
+decodeBase94 :: Integral a => ByteString -> a
+decodeBase94 b =  sum $ zipWith (*) (iterate (94*) 1) $ reverse [fromIntegral (fromEnum c - fromEnum '!') | c <- BS.unpack b]
