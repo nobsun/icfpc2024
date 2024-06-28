@@ -16,127 +16,127 @@ f $? x = let v = f x
 
 type Env = [(Var, Expr)]
 
-eval :: Env -> Expr -> Either String (Expr, Env)
+eval :: Env -> Expr -> Either String (Env, Expr)
 eval env e = case e of
-  EBool b -> Right (e, env)
-  EInt i  -> Right (e, env)
-  EStr s  -> Right (e, env)
+  EBool b -> Right (env, e)
+  EInt i  -> Right (env, e)
+  EStr s  -> Right (env, e)
   EUnary op e -> unary env op e
   EBinary op e1 e2 -> binary env op e1 e2
   EIf c t e -> do
-    (c', env') <- eval env c
+    (env', c') <- eval env c
     case c' of
       EBool True  -> eval env' t
       EBool False -> eval env' e
       _           -> Left "If condition is not a boolean"
-  ELambda v b -> Right (ELambda v b, env) -- TODO
+  ELambda v b -> Right (env, ELambda v b) -- TODO
   EVar v      -> maybe (Left msg) (eval env) $ lookup v env
     where
       msg = "Variable " ++ show v ++ " not found"
 
-unary :: Env -> UOp -> Expr -> Either String (Expr, Env)
+unary :: Env -> UOp -> Expr -> Either String (Env, Expr)
 unary env Not e = do
-  (e', env') <- eval env e
+  (env', e') <- eval env e
   case e' of
-    EBool b -> Right (EBool $ not b, env')
+    EBool b -> Right (env', EBool $ not b)
     _       -> Left "Not applied to non-boolean"
 unary env Neg e = do
-  (e', env') <- eval env e
+  (env', e') <- eval env e
   case e' of
-    EInt i -> Right (EInt $ negate i, env')
+    EInt i -> Right (env', EInt $ negate i)
     _      -> Left "Neg applied to non-integer"
 unary env StrToInt e = do
-  (e', env') <- eval env e
+  (env', e') <- eval env e
   case e' of
-    EStr cs -> Right (EInt i, env')
+    EStr cs -> Right (env', EInt i)
       where
         cs' = tail $ BS.unpack $ encodeStr cs
         i = fromIntegral $ foldl' (\acc c -> acc * 94 + ord c - ord '!') 0 cs'
     _       -> Left "StrToInt applied to non-string"
 unary env IntToStr e = do
-  (e', env') <- eval env e
+  (env', e') <- eval env e
   case e' of
-    EInt i -> Right (EStr $ cultToHuman $ encodeBase94 i, env')
+    EInt i -> Right (env', EStr $ cultToHuman $ encodeBase94 i)
     _      -> Left "IntToStr applied to non-integer"
 
-binary :: Env -> BinOp -> Expr -> Expr -> Either String (Expr, Env)
+binary :: Env -> BinOp -> Expr -> Expr -> Either String (Env, Expr)
 binary env Add e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EInt $ i1 + i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EInt $ i1 + i2)
     _                  -> Left "Add applied to non-integers"
 binary env Sub e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EInt $ i1 - i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EInt $ i1 - i2)
     _                  -> Left "Sub applied to non-integers"
 binary env Mult e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EInt $ i1 * i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EInt $ i1 * i2)
     _                  -> Left "Mult applied to non-integers"
 binary env Div e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EInt $ i1 `quot` i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EInt $ i1 `quot` i2)
     _                  -> Left "Div applied to non-integers"
 binary env Mod e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EInt $ i1 `rem` i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EInt $ i1 `rem` i2)
     _                  -> Left "Mod applied to non-integers"
 binary env Lt e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EBool $ i1 < i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EBool $ i1 < i2)
     _                  -> Left "Lt applied to non-integers"
 binary env Gt e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EBool $ i1 > i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EBool $ i1 > i2)
     _                  -> Left "Gt applied to non-integers"
 binary env Eql e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (EBool $ i1 == i2, env'')
+    (EInt i1, EInt i2) -> Right (env'', EBool $ i1 == i2)
     _                  -> Left "Eql applied to non-integers"
 binary env Or e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EBool b1, EBool b2) -> Right (EBool $ b1 || b2, env'')
+    (EBool b1, EBool b2) -> Right (env'', EBool $ b1 || b2)
     _                    -> Left "Or applied to non-booleans"
 binary env And e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EBool b1, EBool b2) -> Right (EBool $ b1 && b2, env'')
+    (EBool b1, EBool b2) -> Right (env'', EBool $ b1 && b2)
     _                    -> Left "And applied to non-booleans"
 binary env Concat e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EStr s1, EStr s2) -> Right (EStr $ BS.append s1 s2, env'')
+    (EStr s1, EStr s2) -> Right (env'', EStr $ BS.append s1 s2)
     _                  -> Left "Concat applied to non-strings"
 binary env Take e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i, EStr s) -> Right (EStr $ BS.take (fromIntegral i) s, env'')
+    (EInt i, EStr s) -> Right (env'', EStr $ BS.take (fromIntegral i) s)
     _                -> Left "Take applied to non-integer and non-string"
 binary env Drop e1 e2 = do
-  (e1', env')  <- eval env e1
-  (e2', env'') <- eval env' e2
+  (env', e1')  <- eval env e1
+  (env'', e2') <- eval env' e2
   case (e1', e2') of
-    (EInt i, EStr s) -> Right (EStr $ BS.drop (fromIntegral i) s, env'')
+    (EInt i, EStr s) -> Right (env'', EStr $ BS.drop (fromIntegral i) s)
     _                -> Left "Drop applied to non-integer and non-string"
 binary env Apply e1 e2 = do
   case e1 of
@@ -148,7 +148,7 @@ binary env Apply e1 e2 = do
 test :: Expr -> String -> Bool
 test exp s = do
   let Right e = parseExpr "test" $ BS.pack s
-  let Right (actual, _) = eval [] $? e
+  let Right (_, actual) = eval [] $? e
   actual == exp
 
 -- Unary
