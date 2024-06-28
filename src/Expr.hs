@@ -59,6 +59,9 @@ data BinOp
 
 type Token = ByteString
 
+{- $setup
+>>> :seti -XOverloadedStrings
+ -}
 
 encode :: Expr -> [Token]
 encode (EBool b) = [encodeBool b]
@@ -76,10 +79,18 @@ encodeBool True = "T"
 encodeBool False = "F"
 
 
+{- |
+>>> encodeNat 1337
+"I/6"
+ -}
 encodeNat :: Integer -> Token
 encodeNat n = "I" <> encodeBase94 n
 
 
+{- |
+>>> encodeStr "Hello World!"
+"SB%,,/}Q/2,$_"
+ -}
 encodeStr :: ByteString -> Token
 encodeStr s = "S" <> BS.pack [table Map.! c | c <- BS.unpack s]
   where
