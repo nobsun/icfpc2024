@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Client where
 
-import Data.Char (chr, ord)
+import Data.Char (chr, ord, isSpace)
 import Data.Maybe (mapMaybe)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -12,10 +12,9 @@ import Network.HTTP.Client (defaultManagerSettings, RequestBody (RequestBodyLBS)
 import Expr
 import Parser (parseExpr)
 
-token = "Bearer 39572a1c-b861-4e57-8405-b9fda4f8cec3"
-
-
 simplePost raw = do
+  token <- BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
+
   let msg = encodeStr $ BS.pack raw
   print "===================="
   print $ BS.pack "SEND: " <> msg
@@ -23,7 +22,7 @@ simplePost raw = do
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest "https://boundvariable.space/communicate"
   let req = initReq { method = "POST"
-                    , requestHeaders = [( "Authorization", token)]
+                    , requestHeaders = [( "Authorization", "Bearer " <> token)]
                     , requestBody = RequestBodyBS msg
                     }
   resp <- httpLbs req manager
