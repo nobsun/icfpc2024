@@ -71,7 +71,7 @@ binOp = asum
 
 
 lam :: Parser Int
-lam = do
+lam = try $ do
   b <- anySingle
   case BS.stripPrefix "L" b of
     Nothing -> empty
@@ -79,7 +79,7 @@ lam = do
 
 
 var :: Parser Int
-var = do
+var = try $ do
   b <- anySingle
   case BS.stripPrefix "v" b of
     Nothing -> empty
