@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Eval where
 
 import Data.Char (ord)
@@ -5,6 +6,7 @@ import Data.List (foldl')
 import qualified Data.ByteString.Char8 as BS
 import Debug.Trace (trace)
 
+import Parser (parseExpr)
 import Expr
 f $? x = let v = f x
              msg = "{- " ++ show x ++ " => " ++ show v ++ " -}"
@@ -59,8 +61,8 @@ unary env IntToStr e = do
 
 binary :: Env -> BinOp -> Expr -> Expr -> Either String (Expr, Env)
 binary env Add e1 e2 = do
-  (e1', env')  <- eval env $? e1
-  (e2', env'') <- eval env' $? e2
+  (e1', env')  <- eval env e1
+  (e2', env'') <- eval env' e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (EInt $ i1 + i2, env'')
     _                  -> Left "Add applied to non-integers"
@@ -140,3 +142,41 @@ binary env Apply e1 e2 = case e1 of
     ELambda v e1' -> let env' = (v, e2) : env in eval env' e1'
     _           -> Left "Apply applied to non-lambda"
 
+
+-----
+test :: Expr -> String -> Bool
+test exp s = do
+  let Right e = parseExpr "test" $ BS.pack s
+  let Right (actual, _) = eval [] $? e
+  actual == exp
+
+-- Unary
+test1 = test (EInt (-3)) "U- I$"
+test2 = test (EBool False) "U! T"
+test3 = test (EInt 15818151) "U# S4%34"
+test4 = test (EStr "test") "U$ I4%34"
+
+-- Binary
+test5 = test (EInt 5) "B+ I# I$"
+test6 = test (EInt 1) "B- I$ I#"
+test7 = test (EInt 6) "B* I$ I#"
+test8 = test (EInt (-3)) "B/ U- I( I#"
+test9 = test (EInt (-1)) "B% U- I( I#"
+test10 = test (EBool False) "B< I$ I#"
+test11 = test (EBool True) "B> I$ I#"
+test12 = test (EBool False) "B= I$ I#"
+test13 = test (EBool True) "B| T F"
+test14 = test (EBool False) "B& T F"
+test15 = test (EStr "test") "B. S4% S34"
+test16 = test (EStr "tes") "BT I$ S4%34"
+test17 = test (EStr "t") "BD I$ S4%34"
+
+-- If
+test18 = test (EStr "no") "? B> I# I$ S9%3 S./"
+
+-- Lambda
+test19 = test (EStr "Hello World!") "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
+
+
+-- Evaluation
+test20 = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
