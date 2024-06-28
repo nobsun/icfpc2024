@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Parser where
+module Parser
+  ( parseExpr
+  ) where
 
 import Control.Applicative
 import Data.ByteString.Char8 (ByteString)
@@ -106,3 +108,7 @@ expr = asum
        pure $ ELambda v e
   , EVar <$> var
   ]
+
+
+parseExpr :: [ByteString] -> Maybe Expr
+parseExpr = parseMaybe expr
