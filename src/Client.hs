@@ -23,8 +23,7 @@ simplePost raw = do
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest "https://boundvariable.space/communicate"
   let req = initReq { method = "POST"
-                    , requestHeaders = [( "Authorization"
-                                        , token)]
+                    , requestHeaders = [( "Authorization", token)]
                     , requestBody = RequestBodyBS msg
                     }
   resp <- httpLbs req manager
