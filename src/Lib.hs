@@ -31,8 +31,13 @@ someFunc = putStrLn "なんか関数"
 int :: String -> Int
 int = foldl (\acc c -> acc * 94 + ord c - ord '!') 0
 
-str :: String -> String
-str = mapMaybe $ flip lookup dict
+decode :: String -> String
+decode = mapMaybe $ flip lookup dict
+
+encode :: String -> String
+encode = mapMaybe $ flip lookup dict'
+  where dict' = map swap dict
+        swap (a, b) = (b, a)
 
 dict = zip cultCode humanReadable
   where
@@ -44,3 +49,12 @@ test = "B%,,/}Q/2,$_"
 
 -- curl -X POST -H 'Authorization: Bearer 39572a1c-b861-4e57-8405-b9fda4f8cec3' https://boundvariable.space/communicate
 communicate = "J!23%}%22/2n}O.%80%#4%$}?I@"
+
+ex1 = do
+  str <- readFile "answer1"
+  return $ tail str
+
+ex2 = do
+  str <- readFile "answer2"
+  return $ tail str
+
