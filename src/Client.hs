@@ -29,7 +29,6 @@ postEncoded str = do
   return $ decode $ tail $ LBS.unpack body
 --}
 
-
 simplePost raw = do
   let msg = encodeStr $ BS.pack raw
   print "===================="
