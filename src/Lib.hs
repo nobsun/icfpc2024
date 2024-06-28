@@ -20,6 +20,17 @@ import Network.HTTP.Client
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Client (defaultManagerSettings, RequestBody (RequestBodyLBS))
 
+{- |
+「なんか関数」を標準出力に印字する
+>>> someFunc
+なんか関数
+-}
+someFunc :: IO ()
+someFunc = putStrLn "なんか関数"
+
+
+-----
+
 token = "Bearer 39572a1c-b861-4e57-8405-b9fda4f8cec3"
 
 postEncoded :: String -> IO String
@@ -38,6 +49,9 @@ postEncoded str = do
 simplePost :: String -> IO String
 simplePost raw = do
   let msg = encode' raw
+  print "===================="
+  print $ "SEND: " ++ msg
+  print "===================="
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest "https://boundvariable.space/communicate"
   let req = initReq { method = "POST"
@@ -46,18 +60,11 @@ simplePost raw = do
                     , requestBody = RequestBodyLBS (LBS.pack msg)
                     }
   resp <- httpLbs req manager
-  let body = responseBody resp
-  return $ decode $ tail $ LBS.unpack body
-
-
-{- |
-「なんか関数」を標準出力に印字する
->>> someFunc
-なんか関数
--}
-someFunc :: IO ()
-someFunc = putStrLn "なんか関数"
-
+  let body = LBS.unpack $ responseBody resp
+  print "===================="
+  print $ "RECV: " ++ body
+  print "===================="
+  return $ decode $ tail body
 
 
 parse :: String -> String
