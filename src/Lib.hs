@@ -20,21 +20,21 @@ import Network.HTTP.Client
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Client (defaultManagerSettings, RequestBody (RequestBodyLBS))
 
-simplePost :: String -> IO ()
+token = "Bearer 39572a1c-b861-4e57-8405-b9fda4f8cec3"
+
+simplePost :: String -> IO String
 simplePost raw = do
   let msg = encode' raw
-  
-  putStrLn msg
-  
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest "https://boundvariable.space/communicate"
   let req = initReq { method = "POST"
-                    , requestHeaders = [("Authorization", "Bearer 39572a1c-b861-4e57-8405-b9fda4f8cec3")]
+                    , requestHeaders = [( "Authorization"
+                                        , token)]
                     , requestBody = RequestBodyLBS (LBS.pack msg)
                     }
   resp <- httpLbs req manager
   let body = responseBody resp
-  putStrLn $ decode $ tail $ LBS.unpack body
+  return $ decode $ tail $ LBS.unpack body
 
 
 {- |
