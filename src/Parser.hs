@@ -14,7 +14,7 @@ import Text.Megaparsec hiding (Token)
 import Expr
 
 
-type Parser = Parsec Void [ByteString] 
+type Parser = Parsec Void [ByteString]
 
 
 bool :: Parser Bool
