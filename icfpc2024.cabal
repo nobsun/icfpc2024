@@ -28,6 +28,7 @@ library
       Lib
       Expr
       Client
+      Imports
   other-modules:
       Paths_icfpc2024
   autogen-modules:
