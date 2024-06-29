@@ -55,6 +55,7 @@ library:
   - Value
   - Vec2
   - LambdaMan
+  - SpaceShip
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:
