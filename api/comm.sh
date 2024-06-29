@@ -1,6 +1,8 @@
 #! /bin/sh
 
-if [ -r ./env ]; then
+if   [ -r ./token.txt ]; then
+    AUTH_TOKEN=$(cat ./token.txt)
+elif [ -r ./env       ]; then
     . ./env
 fi
 
