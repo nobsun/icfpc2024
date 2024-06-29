@@ -15,6 +15,7 @@ import Text.Megaparsec (ParseErrorBundle)
 import Expr
 import Eval (evalExpr)
 import Parser (parseExpr)
+import qualified Value
 
 simplePost raw = do
   token <- readToken
@@ -61,10 +62,11 @@ cat name = do
 getString :: String -> IO BS.ByteString
 getString name = do
   expr <- getExpr name
-  case evalExpr expr of
-    Left err -> throwIO (userError err)
-    Right (_, _, EStr s) -> return s
-    Right (_, _, expr2) -> throwIO $ userError $ "failed to evaluate to string: " ++ show expr2
+  case Value.eval expr of
+    Value.VStr s -> return s
+    Value.VBool _ -> throwIO (userError "evaluated to boolean")
+    Value.VInt _ -> throwIO (userError "evaluated to int")
+    Value.VFun _ -> throwIO (userError "evaluated to function")
 
 getExpr :: String -> IO Expr
 getExpr name = do
