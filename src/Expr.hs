@@ -24,14 +24,12 @@ import qualified Data.IntSet as IntSet
 import Data.List (unfoldr)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Sequence
-import Data.Word
 
 
 data Expr
   = EBool !Bool
   | EInt !Integer
-  | EStr (Seq Word8) -- EStr ByteString
+  | EStr ByteString
   | EUnary !UOp Expr
   | EBinary !BinOp Expr Expr
   | EIf Expr Expr Expr
