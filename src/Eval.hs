@@ -4,6 +4,7 @@ module Eval where
 import Data.Char (ord)
 import Data.List (foldl')
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.IntSet as IntSet
 import Debug.Trace (trace)
 
 import Parser (parseExpr)
@@ -141,14 +142,9 @@ binary env Drop e1 e2 = do
     (EInt i, EStr s) -> Right (env, EStr $ BS.drop (fromIntegral i) s)
     _                -> Left $ "Drop applied to non-integer and non-string: e1=" ++ show e1' ++ ",e2=" ++ show e2
 binary env Apply e1 e2 = do
-  case e1 of
-    EBinary _ _ _ -> do
-      (env', e1') <- eval env e1
-      eval env' (EBinary Apply e1' e2)
-    EVar v -> do
-      (_, e1') <- eval env e1
-      eval env (EBinary Apply e1' e2)
-    ELambda v e'  -> let env' = (v, e2):env in eval (id $? env') $? e'
+  (env', e1') <- eval env e1
+  case renameBoundVariables (IntSet.fromList $ map fst env') e1' of
+    ELambda v e'  -> let env'' = (v, e2):env' in eval (id $? env'') $? e'
     _             -> Left $ "Apply applied to non-lambda: e1=" ++ show e1 ++ ",e2=" ++ show e2 ++ ",env=" ++ show env
 
 
