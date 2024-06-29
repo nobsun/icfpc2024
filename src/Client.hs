@@ -45,5 +45,6 @@ simplePost raw = do
           BS.putStrLn s
           putStrLn "===================="
           BS.writeFile "response_decoded_str.txt" s
+        _ -> return ()
 
   return ret
