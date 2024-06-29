@@ -189,7 +189,7 @@ _testLam = test (EStr "Hello World!") "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
 _testEval = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
 
 -- Limit
-_testLim = test (EInt 1) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
+_testLim = test (EInt 16) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
 
 -- I combinator
 -- I 42
@@ -209,28 +209,28 @@ _p21 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\"
 _p21' :: BS.ByteString
 _p21' = "[(L\" [(L# (v\" (v# v#))) (L# (v\" (v# v#)))])    [L\" L# {? (B= v# I!) I\" [(L$ (B+ (v\" v$) (v\" v$))) (B- v# I\")]}]]   I%"
 
-_testAll = and $ map fst4 [ _testNeg,
-                            _testNot,
-                            _testI2S,
-                            _testS2I,
-                            _testAdd,
-                            _testSub,
-                            _testMul,
-                            _testQuot,
-                            _testRem,
-                            _testLt,
-                            _testGt,
-                            _testEq,
-                            _testOr,
-                            _testAnd,
-                            _testComp,
-                            _testTake,
-                            _testDrop,
-                            _testIf,
-                            _testLam,
-                            _testEval,
-                            _testLim
-                          ]
+_testAll = and $ map fst4 _allTests
           where fst4 (a, _, _, _) = a
-
+_allTests = [ _testNeg,
+              _testNot,
+              _testI2S,
+              _testS2I,
+              _testAdd,
+              _testSub,
+              _testMul,
+              _testQuot,
+              _testRem,
+              _testLt,
+              _testGt,
+              _testEq,
+              _testOr,
+              _testAnd,
+              _testComp,
+              _testTake,
+              _testDrop,
+              _testIf,
+              _testLam,
+              _testEval,
+              _testLim
+            ]
 
