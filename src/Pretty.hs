@@ -28,24 +28,26 @@ showpp = pps . show
 -----
 
 pprInfix :: Expr -> String
-pprInfix = ppsString . pprExpr PInfix
+pprInfix = ppsString . pprExpr (PInfix, 0)
 
 pprPrefix :: Expr -> String
-pprPrefix = ppsString . pprExpr PInfix
+pprPrefix = ppsString . pprExpr (PInfix, 0)
 
 data PprFix
   = PInfix
   | PPrefix
 
-pprExpr :: PprFix -> Expr -> PPString
-pprExpr pf e0 = case e0 of
+type Cxt = (PprFix, Int)
+
+pprExpr :: Cxt -> Expr -> PPString
+pprExpr cx e0 = case e0 of
   EBool b            -> pprBool b
   EInt i             -> pprNat i
   EStr s             -> pprStr s
-  EUnary op e        -> pprUnary pf op e
-  EBinary op e1 e2   -> pprBinary pf op e1 e2
-  EIf e1 e2 e3       -> pprIf pf e1 e2 e3
-  ELambda v e        -> pprLambda pf v e
+  EUnary op e        -> pprUnary cx op e
+  EBinary op e1 e2   -> pprBinary cx op e1 e2
+  EIf e1 e2 e3       -> pprIf cx e1 e2 e3
+  ELambda v e        -> pprLambda cx v e
   EVar v             -> pprVar v
 
 pprBool :: Bool -> PPString
@@ -58,7 +60,7 @@ pprNat = showpp
 pprStr :: ByteString -> PPString
 pprStr = dquote . pps . B8.unpack
 
-pprUnary :: PprFix -> UOp -> Expr -> PPString
+pprUnary :: Cxt -> UOp -> Expr -> PPString
 pprUnary pf u e = pprUOp u <+> parenExpr pf e
 
 pprUOp :: UOp -> PPString
@@ -68,11 +70,11 @@ pprUOp u = case u of
   StrToInt  -> "str-to-int"
   IntToStr  -> "int-to-str"
 
-pprBinary :: PprFix -> BinOp -> Expr -> Expr -> PPString
+pprBinary :: Cxt -> BinOp -> Expr -> Expr -> PPString
 pprBinary pf op e1 e2 = pprBOp pf op (parenExpr pf e1) (parenExpr pf e2)
 
-pprBOp :: PprFix -> BinOp -> PPString -> PPString -> PPString
-pprBOp pprFix b = case b of
+pprBOp :: Cxt -> BinOp -> PPString -> PPString -> PPString
+pprBOp (pprFix, _) b = case b of
   Add     ->  opInfix "+"
   Sub     ->  opInfix "-"
   Mult    ->  opInfix "*"
@@ -99,10 +101,16 @@ pprBOp pprFix b = case b of
     pprInfix   op x y = x <+> op <+> y
     pprPrefix  op x y = op <+> x <+> y
 
-pprIf :: PprFix -> Expr -> Expr -> Expr -> PPString
-pprIf pf e1 e2 e3 = "if" <+> parenExpr pf e1 <+> parenExpr pf e2 <+> parenExpr pf e3
+pprIf :: Cxt -> Expr -> Expr -> Expr -> PPString
+-- pprIf pf e1 e2 e3 = "if" <+> parenExpr pf e1 <+> parenExpr pf e2 <+> parenExpr pf e3
+pprIf (pf, ilv) e1 e2 e3 =
+  indent <> "if" <+> pprExpr cx' e1     <> "\n" <>
+  indent <> "then" <+>  pprExpr cx' e2  <> "\n" <>
+  indent <> "else" <+>  pprExpr cx' e3  <> "\n"
+  where cx' = (pf, succ ilv)
+        indent = pps $ replicate ilv ' '
 
-pprLambda :: PprFix -> Var -> Expr -> PPString
+pprLambda :: Cxt -> Var -> Expr -> PPString
 pprLambda pf v e = "λ" <+> pprVar v <+> "->" <+> pprExpr pf e
 
 pprVar :: Var -> PPString
@@ -110,10 +118,10 @@ pprVar v = "v" <> showpp v
 
 -----
 
-parenExpr :: PprFix -> Expr -> PPString
-parenExpr pf e
-  | literal e  = pprExpr pf e
-  | otherwise  = paren (pprExpr pf e)
+parenExpr :: Cxt -> Expr -> PPString
+parenExpr cx e
+  | literal e  = pprExpr cx e
+  | otherwise  = paren (pprExpr cx e)
 
 literal :: Expr -> Bool
 literal e = case e of
