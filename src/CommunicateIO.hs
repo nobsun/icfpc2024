@@ -14,10 +14,10 @@ communicateFile :: FilePath -> IO String
 communicateFile = (communicate_ =<<) . L8.readFile
 
 communicate :: L8.ByteString -> IO Expr
-communicate req = either fail pure . parseExpr . B8.pack  =<< communicate_ req
+communicate req = either fail pure . parseExpr . B8.pack =<< communicate_ req
 
 communicate_ :: L8.ByteString -> IO String
-communicate_ = readProcess "./api/comm.sh" [] . L8.unpack
+communicate_ bs = readProcess "./api/comm.sh" [] (L8.unpack bs)
 
 command :: String -> String -> IO Expr
 command cmd x = communicate $ L8.fromChunks $ encode $ EStr $ fromString $ cmd <> " " <> x
