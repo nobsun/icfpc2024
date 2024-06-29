@@ -11,10 +11,13 @@ module Expr
   , decodeBase94
   , humanToCult
   , cultToHuman
+  , fvs
   ) where
 
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BS
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IntSet
 import Data.List (unfoldr)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -170,3 +173,15 @@ encodeBase94 n = BS.pack (reverse (unfoldr f n))
 
 decodeBase94 :: Integral a => ByteString -> a
 decodeBase94 b =  sum $ zipWith (*) (iterate (94*) 1) $ reverse [fromIntegral (fromEnum c - fromEnum '!') | c <- BS.unpack b]
+
+
+-- | Free variables
+fvs :: Expr -> IntSet
+fvs (EBool _) = IntSet.empty
+fvs (EInt _) = IntSet.empty
+fvs (EStr _) = IntSet.empty
+fvs (EUnary _ e) = fvs e
+fvs (EBinary _ e1 e2) = fvs e1 `IntSet.union` fvs e2
+fvs (EIf e1 e2 e3) = IntSet.unions $ map fvs [e1, e2, e3]
+fvs (ELambda v e) = IntSet.delete v (fvs e)
+fvs (EVar v) = IntSet.singleton v
