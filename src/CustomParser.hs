@@ -9,7 +9,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 -- import Data.Void
 
-import ParserLib
+import ParserLib as Lib
 import Expr
 
 {- $setup
@@ -133,9 +133,10 @@ expr = asum
   , EVar <$> var
   ]
 
+---
+
+parse :: WParser ByteString a -> ByteString -> Either String (a, [ByteString])
+parse p = runParser p . BS.words
 
 parseExpr :: BS.ByteString -> Either String Expr
-parseExpr = evalParser expr . BS.words
-
-parseExpr_ :: BS.ByteString -> Either String (Expr, [ByteString])
-parseExpr_ = runParser expr . BS.words
+parseExpr = evalParser (expr <* eof) . BS.words
