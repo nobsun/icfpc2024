@@ -19,6 +19,9 @@ type Env = [(Var, Expr)]
 
 type BetaReductionCount = Integer
 
+evalExpr :: Expr -> Either String (Env, BetaReductionCount, Expr)
+evalExpr = eval [] 0
+
 eval :: Env -> BetaReductionCount -> Expr -> Either String (Env, BetaReductionCount, Expr)
 eval env brc e = case e of
   EBool b -> Right (env, brc, e)

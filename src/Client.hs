@@ -13,7 +13,7 @@ import Network.HTTP.Client (defaultManagerSettings, RequestBody (RequestBodyLBS)
 import Text.Megaparsec (ParseErrorBundle)
 
 import Expr
-import Eval (eval)
+import Eval (evalExpr)
 import Parser (parseExpr)
 
 simplePost raw = do
@@ -59,7 +59,7 @@ getString name = do
   case ret of
     Left err -> throwIO $ userError $ show err
     Right expr -> do
-      case eval [] 0 expr of
+      case evalExpr expr of
         Left err -> throwIO (userError err)
         Right (_, _, EStr s) -> return s
         Right (_, _, expr2) -> throwIO $ userError $ "failed to evaluate to string: " ++ show expr2
