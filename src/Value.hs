@@ -24,10 +24,12 @@ module Value
   , vIf
 
   , exprToHaskellExpr
+  , eval
   ) where
 
 
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.IntMap.Lazy as IntMap
 import Expr
 
 data Value
@@ -80,3 +82,37 @@ exprToHaskellExpr = ($ "") . f
     f (EIf e1 e2 e3) = showParen True $ showString "vIf " . f e1 . showString " " . f e2 . showString " " . f e3
     f (ELambda x e) = showParen True $ showString "VFun " . (showParen True $ showString ("\\x"  ++ show x) . showString " -> " . f e)
     f (EVar x) = showString ("x" ++ show x)
+
+eval :: Expr -> Value
+eval = f IntMap.empty
+  where
+    f _env (EBool b) = VBool b
+    f _env (EInt n) = VInt n
+    f _env (EStr s) = VStr s
+    f env (EUnary op e) = op' (f env e)
+      where
+        op' = case op of
+                Neg      -> vNeg
+                Not      -> vNot
+                StrToInt -> vStrToInt
+                IntToStr -> vIntToStr
+    f env (EBinary op e1 e2) = op' (f env e1) (f env e2)
+      where
+        op' = case op of
+                Add     -> vAdd
+                Sub     -> vSub
+                Mult    -> vMult
+                Div     -> vDiv
+                Mod     -> vMod
+                Lt      -> vLt
+                Gt      -> vGt
+                Eql     -> vEql
+                Or      -> vOr
+                And     -> vAnd
+                Concat  -> vConcat
+                Take    -> vTake
+                Drop    -> vDrop
+                Apply   -> vApply
+    f env (EIf e1 e2 e3) = vIf (f env e1) (f env e2) (f env e3)
+    f env (ELambda n e) = VFun (\x -> f (IntMap.insert n x env) e)
+    f env (EVar n) = env IntMap.! n
