@@ -27,3 +27,6 @@ get = command "get"
 
 echo :: String -> IO Expr
 echo = command "echo"
+
+solve :: String -> String -> IO Expr
+solve prob solution = command "solve" $ unwords [prob, solution]
