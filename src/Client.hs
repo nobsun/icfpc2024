@@ -83,13 +83,18 @@ download name = do
 -- Usage:
 --
 -- > submitSolution "lambdaman1" "LLLDURRRUDRRURR"
--- EStr "Correct, you solved lambdaman1 with a score of 33!\n"
-submitSolution :: String -> String -> IO Expr
+-- Correct, you solved lambdaman1 with a score of 33!
+submitSolution :: String -> String -> IO ()
 submitSolution name solution = do
   ret <- postRaw ("solve " ++ name ++ " " ++ solution)
   case ret of
     Left err -> throwIO $ userError $ show err
-    Right expr -> return expr
+    Right expr -> do
+      case Value.eval expr of
+        Value.VStr s  -> BS.putStr s
+        Value.VBool b -> print b
+        Value.VInt n  -> print n
+        Value.VFun _  -> BS.putStrLn "<function>"
  
 readToken :: IO BS.ByteString
 readToken = BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
