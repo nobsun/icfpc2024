@@ -81,6 +81,11 @@ download name = do
   s <- getString name
   BS.writeFile ("answers/" ++ name) s
 
+downloadExpr :: String -> IO ()
+downloadExpr name = do
+  e <- getExpr name
+  writeFile ("answers/" ++ name) (show e)
+
 -- Usage:
 --
 -- > submitSolution "lambdaman1" "LLLDURRRUDRRURR"
