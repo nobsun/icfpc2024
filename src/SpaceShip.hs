@@ -3,8 +3,12 @@ module SpaceShip
   , solveFile
   , solveNaive
   , solveNaive'
+
+  , solveNearbySorted
   ) where
 
+import Data.Function (on)
+import Data.List
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Set (Set)
@@ -70,7 +74,19 @@ solveNaive' prob = f ((0,0), (0,0)) [] prob
             -1
           else
             0
-            
+
+solveNearbySorted :: Problem -> String
+solveNearbySorted = solveNaive . nearbySort
+
+distance :: Pos -> Pos -> Float
+distance (x1,y1) (x2,y2) = abs (fromIntegral (x1 - x2)) + abs (fromIntegral (y1 - y2))
+
+nearbySort :: [Pos] -> [Pos]
+nearbySort ps = unfoldr psi start
+  where
+    psi [] = Nothing
+    psi (p:ps) = Just (p, sortBy (compare `on` distance p) ps)
+    start = sortBy (compare `on` distance (0,0)) ps
 
 type Move = (Int, Int)
 
