@@ -3,6 +3,7 @@
 module Interp
     ( Value (..)
     , Env
+    , interpret
     , interp
     ) where
 
@@ -92,6 +93,15 @@ exUOp uop val = case uop of
         VInt n -> pure (VStr (cultToHuman (encodeBase94 n)))
         _      -> pure $ VBottom "operand is not Int"
 
+type BetaCount = Int
+
+{- |
+>>> interpret _languageTestExpr
+(Self-check OK, send `solve language_test 4w3s0m3` to claim points for it :: String,5)
+-}
+interpret :: Expr -> (Value, BetaCount)
+interpret e = runState (interp M.empty e) 0
+
 _languageTestExpr :: Expr
 _languageTestExpr = EIf (EBinary Eql (EBinary Apply (EBinary Apply (EBinary Apply (EBinary Apply (ELambda 3 (ELambda 3 (ELambda 3 (ELambda 2 (EVar 3))))) (EInt 1)) (EInt 2)) (EInt 3)) (EInt 4)) (EInt 3)) (EIf (EBinary Eql (EBinary Apply (ELambda 3 (EVar 3)) (EInt 10)) (EInt 10)) (EIf (EBinary Eql (EBinary Drop (EInt 3) (EStr "test")) (EStr "t")) (EIf (EBinary Eql (EBinary Take (EInt 3) (EStr "test")) (EStr "tes")) (EIf (EBinary Eql (EBinary Concat (EStr "te") (EStr "st")) (EStr "test")) (EIf (EUnary Not (EBinary And (EBool True) (EBool False))) (EIf (EBinary And (EBool True) (EBool True)) (EIf (EUnary Not (EBinary Or (EBool False) (EBool False))) (EIf (EBinary Or (EBool False) (EBool True)) (EIf (EBinary Lt (EUnary Neg (EInt 3)) (EUnary Neg (EInt 2))) (EIf (EBinary Gt (EInt 3) (EInt 2)) (EIf (EBinary Eql (EUnary Neg (EInt 1)) (EBinary Mod (EUnary Neg (EInt 3)) (EInt 2))) (EIf (EBinary Eql (EInt 1) (EBinary Mod (EInt 7) (EInt 3))) (EIf (EBinary Eql (EUnary Neg (EInt 1)) (EBinary Div (EUnary Neg (EInt 3)) (EInt 2))) (EIf (EBinary Eql (EInt 2) (EBinary Div (EInt 7) (EInt 3))) (EIf (EBinary Eql (EInt 6) (EBinary Mult (EInt 2) (EInt 3))) (EIf (EBinary Eql (EInt 3) (EBinary Add (EInt 1) (EInt 2))) (EIf (EBinary Eql (EUnary IntToStr (EInt 15818151)) (EStr "test")) (EIf (EBinary Eql (EUnary StrToInt (EStr "test")) (EInt 15818151)) (EIf (EUnary Not (EBool False)) (EIf (EBinary Eql (EUnary Neg (EInt 3)) (EBinary Sub (EInt 2) (EInt 5))) (EIf (EBinary Eql (EInt 3) (EBinary Sub (EInt 5) (EInt 2))) (EIf (EBinary Eql (EStr "test") (EStr "test")) (EIf (EBinary Eql (EBool False) (EBool False)) (EIf (EBinary Eql (EInt 3) (EInt 3)) (EIf (EBool True) (EBinary Concat (EBinary Concat (EStr "Self-check OK, send `solve language_test ") (EUnary IntToStr (EBinary Add (EInt 2) (EBinary Mult (EInt 311) (EInt 124753942619))))) (EStr "` to claim points for it")) (EStr "if is not correct")) (EStr "binary = is not correct")) (EStr "binary = is not correct")) (EStr "binary = is not correct")) (EStr "binary - is not correct")) (EStr "unary - is not correct")) (EStr "unary ! is not correct")) (EStr "unary # is not correct")) (EStr "unary $ is not correct")) (EStr "binary + is not correct")) (EStr "binary * is not correct")) (EStr "binary / is not correct")) (EStr "binary / is not correct")) (EStr "binary % is not correct")) (EStr "binary % is not correct")) (EStr "binary > is not correct")) (EStr "binary < is not correct")) (EStr "binary | is not correct")) (EStr "binary | is not correct")) (EStr "binary & is not correct")) (EStr "binary & is not correct")) (EStr "binary . is not correct")) (EStr "binary T is not correct")) (EStr "binary D is not correct")) (EStr "application is not correct")) (EStr "application is not correct")
 
@@ -105,88 +115,3 @@ _interp s = runState (interp M.empty (_parse s)) 0
 
 _limit :: ByteString
 _limit = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
-
-{- --
-test :: Expr -> String -> (Bool, Expr, Expr)
-test expected s = do
-  let Right e = parseExpr "test" $ BS.pack s
-  let Right (_, actual) = eval [] e
-  (expected == actual, expected, actual)
--- --
--- Unary
-_testNeg = test (EInt (-3)) "U- I$"
-_testNot = test (EBool False) "U! T"
-_testI2S = test (EInt 15818151) "U# S4%34"
-_testS2I = test (EStr "test") "U$ I4%34"
-
--- Binary
-_testAdd  = test (EInt 5) "B+ I# I$"
-_testSub  = test (EInt 1) "B- I$ I#"
-_testMul  = test (EInt 6) "B* I$ I#"
-_testQuot = test (EInt (-3)) "B/ U- I( I#"
-_testRem  = test (EInt (-1)) "B% U- I( I#"
-_testLt   = test (EBool False) "B< I$ I#"
-_testGt   = test (EBool True) "B> I$ I#"
-_testEq   = test (EBool False) "B= I$ I#"
-_testOr   = test (EBool True) "B| T F"
-_testAnd  = test (EBool False) "B& T F"
-_testComp = test (EStr "test") "B. S4% S34"
-_testTake = test (EStr "tes") "BT I$ S4%34"
-_testDrop = test (EStr "t") "BD I$ S4%34"
-
--- If
-_testIf = test (EStr "no") "? B> I# I$ S9%3 S./"
-
--- Lambda
-_testLam = test (EStr "Hello World!") "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
-
-
--- Evaluation
-_testEval = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
-
--- Limit
-_testLim = test (EInt 1) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
-
--- I combinator
--- I 42
-_testI = test (EInt 42) "B$ L# v# IK"
-
--- S combinator
--- S K K 42
-_testS = test (EInt 42) "B$ B$ B$ L# L$ L% B$ B$ v# v% B$ v$ v% L# L$ v# L# L$ v# IK"
-
--- K combinator
--- K 42 3
-_testK = test (EInt 42) "B$ B$ L# L$ v# IK I!"
-
-_p21 :: BS.ByteString
-_p21 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
-{--
-_e21' = ((\v1 -> ((\v2 -> v1 (v2 v2)) (\v2 -> v1 (v2 v2))))
-         (\v1 -> (\v2 -> if v2 == 0 then 1 else (\v3 -> (v1 v3) + (v1 v3)) (v2 - 1)))
-        ) 4
---}
-_testAll = and $ map fst3 [ _testNeg,
-                            _testNot,
-                            _testI2S,
-                            _testS2I,
-                            _testAdd,
-                            _testSub,
-                            _testMul,
-                            _testQuot,
-                            _testRem,
-                            _testLt,
-                            _testGt,
-                            _testEq,
-                            _testOr,
-                            _testAnd,
-                            _testComp,
-                            _testTake,
-                            _testDrop,
-                            _testIf,
-                            _testLam,
-                            _testEval,
-                            _testLim
-                          ]
-          where fst3 (a, _, _) = a
--- -}
