@@ -13,6 +13,7 @@ import qualified Data.Map as M
 import Data.Maybe
 import Expr
 import Parser
+import Debug.Trace
 
 type Env = M.Map Var (State Int Value)
 
@@ -64,7 +65,10 @@ interp rho = \ case
             Drop -> pure (VStr $ BS.drop (fromInteger n) s)
             _    -> pure (VBottom "operator must be take or drop")
         (VFun f, v) -> case op of 
-            Apply -> modify succ >> f (pure v)
+            Apply -> do { r <- f (pure v)
+                        ; modify succ
+                        ; return r
+                        }
             _     -> pure (VBottom "operator is not apply")
         _ -> pure (VBottom "unknow error")
     EIf e e1 e2 -> interp rho e >>= \ case

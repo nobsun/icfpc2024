@@ -50,6 +50,7 @@ library:
   - CustomParser
   - Pretty
   - Eval
+  - Interp
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:
