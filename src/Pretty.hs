@@ -93,20 +93,21 @@ pprBOp (pprFix, _) b = case b of
   Apply   ->  apply
   where
     opInfix  op = case pprFix of
-      PInfix   -> pprInfix op
-      PPrefix  -> pprPrefix op
-    opPrefix op = pprPrefix op
+      PInfix   -> ppInfix op
+      PPrefix  -> ppPrefix op
+    opPrefix op = ppPrefix op
     apply x y = x <+> y
 
-    pprInfix   op x y = x <+> op <+> y
-    pprPrefix  op x y = op <+> x <+> y
+    ppInfix   op x y = x <+> op <+> y
+    ppPrefix  op x y = op <+> x <+> y
 
 pprIf :: Cxt -> Expr -> Expr -> Expr -> PPString
 -- pprIf pf e1 e2 e3 = "if" <+> parenExpr pf e1 <+> parenExpr pf e2 <+> parenExpr pf e3
 pprIf (pf, ilv) e1 e2 e3 =
-  indent <> "if" <+> pprExpr cx' e1     <> "\n" <>
-  indent <> "then" <+>  pprExpr cx' e2  <> "\n" <>
-  indent <> "else" <+>  pprExpr cx' e3  <> "\n"
+  "\n" <> indent <> "if" <+> pprExpr cx' e1     <>
+  "\n" <> indent <> "then" <+>  pprExpr cx' e2  <>
+  "\n" <> indent <> "else" <+>  pprExpr cx' e3  <>
+  "\n"
   where cx' = (pf, succ ilv)
         indent = pps $ replicate ilv ' '
 
