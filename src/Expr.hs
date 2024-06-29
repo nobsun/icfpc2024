@@ -1,12 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE GHC2021 #-}
 module Expr
-  ( Expr (..)
+  ( Expr' (..)
+  , Expr
   , Var
   , UOp (..)
   , BinOp (..)
   , Token
-  , Expr2 (..)
   , toExpr2
   , fromExpr2
   , encode
@@ -30,50 +31,26 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import ICFPCString
 
-data Expr
+type Expr = Expr' ByteString
+
+data Expr' a
   = EBool !Bool
   | EInt !Integer
-  | EStr ByteString
-  | EUnary !UOp Expr
-  | EBinary !BinOp Expr Expr
-  | EIf Expr Expr Expr
-  | ELambda !Var Expr
+  | EStr a
+  | EUnary !UOp (Expr' a)
+  | EBinary !BinOp (Expr' a) (Expr' a)
+  | EIf (Expr' a) (Expr' a) (Expr' a)
+  | ELambda !Var (Expr' a)
   | EVar !Var
-  deriving (Eq, Show, Read)
+  deriving (Eq, Show, Read, Functor)
 
-data Expr2
-  = EBool2 !Bool
-  | EInt2 !Integer
-  | EStr2 ICFPCString
-  | EUnary2 !UOp Expr2
-  | EBinary2 !BinOp Expr2 Expr2
-  | EIf2 Expr2 Expr2 Expr2
-  | ELambda2 !Var Expr2
-  | EVar2 !Var
-  deriving (Eq, Show, Read)
+type Expr2 = Expr' ICFPCString
 
 toExpr2 :: Expr -> Expr2
-toExpr2 = \ case
-  EBool b -> EBool2 b
-  EInt n  -> EInt2 n
-  EStr s  -> EStr2 (toICFPCString s)
-  EUnary o e -> EUnary2 o (toExpr2 e)
-  EBinary o e e' -> EBinary2 o (toExpr2 e) (toExpr2 e')
-  EIf e e1 e2 -> EIf2 (toExpr2 e) (toExpr2 e1) (toExpr2 e2)
-  ELambda x e -> ELambda2 x (toExpr2 e)
-  EVar x -> EVar2 x
+toExpr2 = fmap toICFPCString
 
 fromExpr2 :: Expr2 -> Expr
-fromExpr2 = \ case
-  EBool2 b -> EBool b
-  EInt2 n  -> EInt n
-  EStr2 s  -> EStr (fromICFPCString s)
-  EUnary2 o e -> EUnary o (fromExpr2 e)
-  EBinary2 o e e' -> EBinary o (fromExpr2 e) (fromExpr2 e')
-  EIf2 e e1 e2 -> EIf (fromExpr2 e) (fromExpr2 e1) (fromExpr2 e2)
-  ELambda2 x e -> ELambda x (fromExpr2 e)
-  EVar2 x -> EVar x
-
+fromExpr2 = fmap fromICFPCString
 
 
 type Var = Int

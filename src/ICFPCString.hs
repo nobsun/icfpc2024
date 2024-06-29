@@ -19,3 +19,6 @@ toICFPCString = fromList . map (fromIntegral . ord) . BS.unpack
 fromICFPCString :: ICFPCString -> BS.ByteString
 fromICFPCString = BS.pack . map (chr . fromIntegral) . toList
 
+instance {-# Overlapping #-} Show ICFPCString where
+    showsPrec _ = shows . fromICFPCString
+
