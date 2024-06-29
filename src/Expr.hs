@@ -118,11 +118,6 @@ encodeNat n = "I" <> encodeBase94 n
  -}
 encodeStr :: ByteString -> Token
 encodeStr s = "S" <> humanToCult s
-  where
-    table :: Map Char Char
-    table = Map.fromList $
-      zip "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
-          "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
 humanToCult :: ByteString -> ByteString
 humanToCult s = BS.pack [table Map.! c | c <- BS.unpack s]
@@ -209,9 +204,9 @@ fvs (EVar v) = IntSet.singleton v
 renameBoundVariables :: IntSet -> Expr -> Expr
 renameBoundVariables vs = f (IntMap.fromList [(v, v) | v <- IntSet.toAscList vs])
   where
-    f m e@(EBool _) = e
-    f m e@(EInt _) = e
-    f m e@(EStr _) = e
+    f _ e@(EBool _) = e
+    f _ e@(EInt _) = e
+    f _ e@(EStr _) = e
     f m (EUnary op e) = EUnary op (f m e)
     f m (EBinary op e1 e2) = EBinary op (f m e1) (f m e2)
     f m (EIf e1 e2 e3) = EIf (f m e1) (f m e2) (f m e3)
