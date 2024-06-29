@@ -106,7 +106,9 @@ binary env Eql e1 e2 = do
   (_, e1') <- eval env e1
   (_, e2') <- eval env e2
   case (e1', e2') of
-    (EInt i1, EInt i2) -> Right (env, EBool $ i1 == i2)
+    (EBool b1, EBool b2) -> Right (env, EBool $ b1 == b2)
+    (EInt i1,   EInt i2) -> Right (env, EBool $ i1 == i2)
+    (EStr s1,   EStr s2) -> Right (env, EBool $ s1 == s2)
     _                  -> Left $ "Eql applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2'
 binary env Or e1 e2 = do
   (_, e1') <- eval env e1
@@ -205,11 +207,10 @@ _testK = test (EInt 42) "B$ B$ L# L$ v# IK I!"
 
 _p21 :: BS.ByteString
 _p21 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
-{--
-_e21' = ((\v1 -> ((\v2 -> v1 (v2 v2)) (\v2 -> v1 (v2 v2))))
-         (\v1 -> (\v2 -> if v2 == 0 then 1 else (\v3 -> (v1 v3) + (v1 v3)) (v2 - 1)))
-        ) 4
---}
+
+_p21' :: BS.ByteString
+_p21' = "[(L\" [(L# (v\" (v# v#))) (L# (v\" (v# v#)))])    [L\" L# {? (B= v# I!) I\" [(L$ (B+ (v\" v$) (v\" v$))) (B- v# I\")]}]]   I%"
+
 _testAll = and $ map fst3 [ _testNeg,
                             _testNot,
                             _testI2S,
