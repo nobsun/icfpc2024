@@ -60,14 +60,18 @@ cat name = do
 
 getString :: String -> IO BS.ByteString
 getString name = do
+  expr <- getExpr name
+  case evalExpr expr of
+    Left err -> throwIO (userError err)
+    Right (_, _, EStr s) -> return s
+    Right (_, _, expr2) -> throwIO $ userError $ "failed to evaluate to string: " ++ show expr2
+
+getExpr :: String -> IO Expr
+getExpr name = do
   ret <- postRaw ("get " ++ name)
   case ret of
     Left err -> throwIO $ userError $ show err
-    Right expr -> do
-      case evalExpr expr of
-        Left err -> throwIO (userError err)
-        Right (_, _, EStr s) -> return s
-        Right (_, _, expr2) -> throwIO $ userError $ "failed to evaluate to string: " ++ show expr2
+    Right expr -> return expr
 
 download :: String -> IO ()
 download name = do
