@@ -53,6 +53,11 @@ simplePost raw = do
 
   return ret
 
+cat :: String -> IO ()
+cat name = do
+  s <- getString name
+  BS.putStr s
+
 getString :: String -> IO BS.ByteString
 getString name = do
   ret <- postRaw ("get " ++ name)
