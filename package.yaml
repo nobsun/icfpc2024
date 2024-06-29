@@ -54,6 +54,7 @@ library:
   - ICFPCString
   - Value
   - Vec2
+  - LambdaMan
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:
