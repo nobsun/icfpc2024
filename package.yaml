@@ -26,6 +26,7 @@ dependencies:
 - containers
 - transformers
 - mtl
+- directory
 - filepath
 - process
 - time
@@ -56,6 +57,7 @@ library:
   - Vec2
   - LambdaMan
   - SpaceShip
+  - SpaceShipDiff
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:
