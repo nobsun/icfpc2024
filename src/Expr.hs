@@ -12,10 +12,13 @@ module Expr
   , humanToCult
   , cultToHuman
   , fvs
+  , renameBoundVariables
   ) where
 
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BS
+import Data.IntMap (IntMap)
+import qualified Data.IntMap.Strict as IntMap
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Data.List (unfoldr)
@@ -185,3 +188,26 @@ fvs (EBinary _ e1 e2) = fvs e1 `IntSet.union` fvs e2
 fvs (EIf e1 e2 e3) = IntSet.unions $ map fvs [e1, e2, e3]
 fvs (ELambda v e) = IntSet.delete v (fvs e)
 fvs (EVar v) = IntSet.singleton v
+
+
+-- | vs に指定した変数を束縛しないように Expr をα-変換する
+renameBoundVariables :: IntSet -> Expr -> Expr
+renameBoundVariables vs = f (IntMap.fromList [(v, v) | v <- IntSet.toAscList vs])
+  where
+    f m e@(EBool _) = e
+    f m e@(EInt _) = e
+    f m e@(EStr _) = e
+    f m (EUnary op e) = EUnary op (f m e)
+    f m (EBinary op e1 e2) = EBinary op (f m e1) (f m e2)
+    f m (EIf e1 e2 e3) = EIf (f m e1) (f m e2) (f m e3)
+    f m (ELambda v e)
+      | v `IntMap.member` m =
+          let v2 = fst (IntMap.findMax m) + 1
+              m2 = IntMap.insert v v2 $ IntMap.insert v2 v2 $ m
+           in ELambda v2 (f m2 e)
+      | otherwise =
+          ELambda v (f (IntMap.insert v v m) e)
+    f m (EVar v) =
+      case IntMap.lookup v m of
+        Just v2 -> EVar v2
+        Nothing -> EVar v
