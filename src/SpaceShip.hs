@@ -1,6 +1,8 @@
 module SpaceShip
   ( solve
+  , solveBy
   , solveFile
+  , solveFileBy
   , solveNaive
   , solveNaive'
 
@@ -23,10 +25,16 @@ type State = (Pos, Velocity)
 type Problem = [Pos]
 
 solve :: String -> String
-solve = solveNaive . parse
+solve = solveBy solveNaive
+
+solveBy :: (Problem -> String) -> String -> String
+solveBy f = f . parse
 
 solveFile :: FilePath -> IO String
 solveFile fname = solve <$> readFile fname
+
+solveFileBy :: (String -> String) -> FilePath -> IO String
+solveFileBy solver fname = solver <$> readFile fname
 
 parse :: String -> Problem
 parse s = [(x,y) | l <- lines s, not (null l), let [x,y] = map read $ words l]
@@ -87,7 +95,7 @@ nearbySort ps = unfoldr psi start
     psi [] = Nothing
     psi (p:ps) = Just (p, sortBy (compare `on` distance p) ps)
     start = sortBy (compare `on` distance (0,0)) ps
-
+  
 type Move = (Int, Int)
 
 -- 789

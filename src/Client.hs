@@ -16,6 +16,7 @@ import Expr
 import Eval (evalExpr)
 import Parser (parseExpr)
 import qualified Value
+import SpaceShip
 
 simplePost raw = do
   token <- readToken
@@ -132,3 +133,18 @@ postExpr expr = do
   resp <- httpLbs req manager
   let body = LBS.toStrict $ responseBody resp
   return $ parseExpr "simple" body
+
+----
+-- | Naive と NearbySorted の結果を比較して、改善があれば提出する
+check :: FilePath -> IO ()
+check prob = do
+  old <- solveFileBy (solveBy solveNaive) ("answers/" ++ prob)
+  new <- solveFileBy (solveBy solveNearbySorted) ("answers/" ++ prob)
+  print $ "Old: " ++ show (length old)
+  print $ "New: " ++ show (length new)
+  if length old > length new
+    then do
+      print "Improved"
+      submitSolution prob new
+    else
+      print "No improvement"
