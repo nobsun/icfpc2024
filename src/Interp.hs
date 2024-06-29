@@ -14,6 +14,7 @@ import Data.Maybe
 import Expr
 import Parser
 import Debug.Trace
+import System.IO.Unsafe
 
 type Env = M.Map Var (State Int Value)
 
@@ -38,6 +39,9 @@ interp rho = \ case
     EInt  n     -> pure (VInt n)
     EStr str    -> pure (VStr str)
     EUnary op e -> interp rho e >>= exUOp op
+    EBinary Apply e1 e2 -> interp rho e1 >>= \ case
+        VFun f -> modify succ >> f (interp rho e2)
+        _      -> pure $ VBottom "not function"
     EBinary op e1 e2 -> interp rho e1 >>= \ v1 ->
                         interp rho e2 >>= \ v2 ->
                         case (v1, v2) of
@@ -64,12 +68,6 @@ interp rho = \ case
             Take -> pure (VStr $ BS.take (fromInteger n) s)
             Drop -> pure (VStr $ BS.drop (fromInteger n) s)
             _    -> pure (VBottom "operator must be take or drop")
-        (VFun f, v) -> case op of 
-            Apply -> do { r <- f (pure v)
-                        ; modify succ
-                        ; return r
-                        }
-            _     -> pure (VBottom "operator is not apply")
         _ -> pure (VBottom "unknow error")
     EIf e e1 e2 -> interp rho e >>= \ case
         VBool b | b         -> interp rho e1
