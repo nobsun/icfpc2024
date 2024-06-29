@@ -146,7 +146,7 @@ binary env brc Drop e1 e2 = do
 binary env brc Apply e1 e2 = do
   (env', brc', e1') <- eval env brc e1
   case renameBoundVariables (IntSet.fromList $ map fst env') e1' of
-    ELambda v e'  -> let env'' = (v, e2):env' in eval (id $? env'') (brc'+1) $? e'
+    ELambda v e'  -> let env'' = (v, e2):env' in eval env'' (brc'+1) e'
     _             -> Left $ "Apply applied to non-lambda: e1=" ++ show e1 ++ ",e2=" ++ show e2 ++ ",env=" ++ show env
 
 
@@ -190,6 +190,8 @@ _testEval = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
 
 -- Limit
 _testLim = test (EInt 16) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
+_testLim' = snd4 _testLim == 109
+  where snd4 (a, b, c, d) = b
 
 -- I combinator
 -- I 42
