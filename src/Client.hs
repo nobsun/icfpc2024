@@ -16,9 +16,9 @@ simplePost raw = do
   token <- BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
 
   let msg = encodeStr $ BS.pack raw
-  print "===================="
-  print $ BS.pack "SEND: " <> msg
-  print "===================="
+  putStrLn "===================="
+  BS.putStrLn $ "SEND: " <> msg
+  putStrLn "===================="
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest "https://boundvariable.space/communicate"
   let req = initReq { method = "POST"
@@ -27,8 +27,24 @@ simplePost raw = do
                     }
   resp <- httpLbs req manager
   let body = LBS.toStrict $ responseBody resp
-  writeFile "response.txt" $ BS.unpack body
-  print "===================="
-  print $ BS.pack "RECV: " <> body
-  print "===================="
-  return $ parseExpr "simple" body
+  BS.writeFile "response.txt" body
+  putStrLn "===================="
+  BS.putStrLn $ "RECV: " <> body
+  putStrLn "===================="
+
+  let ret = parseExpr "simple" body
+  case ret of
+    Left err -> do
+      print err
+      putStrLn "===================="
+    Right e -> do
+      let expr_repr = show e
+      writeFile "response_expr.txt" expr_repr
+      case e of
+        EStr s -> do
+          BS.putStrLn s
+          putStrLn "===================="
+          BS.writeFile "response_decoded_str.txt" s
+        _ -> return ()
+
+  return ret
