@@ -1,19 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Client where
 
+import Control.Exception
 import Data.Char (chr, ord, isSpace)
 import Data.Maybe (mapMaybe)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
+import Data.Void
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Client (defaultManagerSettings, RequestBody (RequestBodyLBS))
+import Text.Megaparsec (ParseErrorBundle)
 
 import Expr
+import Eval (eval)
 import Parser (parseExpr)
 
 simplePost raw = do
-  token <- BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
+  token <- readToken
 
   let msg = encodeStr $ BS.pack raw
   putStrLn "===================="
@@ -48,3 +52,37 @@ simplePost raw = do
         _ -> return ()
 
   return ret
+
+getString :: String -> IO BS.ByteString
+getString name = do
+  ret <- postRaw ("get " ++ name)
+  case ret of
+    Left err -> throwIO $ userError $ show err
+    Right expr -> do
+      case eval [] expr of
+        Left err -> throwIO (userError err)
+        Right (_, EStr s) -> return s
+        Right (_, expr2) -> throwIO $ userError $ "failed to evaluate to string: " ++ show expr2
+
+download :: String -> IO ()
+download name = do
+  s <- getString name
+  BS.writeFile ("answers/" ++ name) s
+  
+readToken :: IO BS.ByteString
+readToken = BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
+
+postRaw :: String -> IO (Either (ParseErrorBundle [BS.ByteString] Void) Expr)
+postRaw raw = do
+  token <- readToken
+
+  let msg = encodeStr $ BS.pack raw
+  manager <- newManager tlsManagerSettings
+  initReq <- parseRequest "https://boundvariable.space/communicate"
+  let req = initReq { method = "POST"
+                    , requestHeaders = [( "Authorization", "Bearer " <> token)]
+                    , requestBody = RequestBodyBS msg
+                    }
+  resp <- httpLbs req manager
+  let body = LBS.toStrict $ responseBody resp
+  return $ parseExpr "simple" body
