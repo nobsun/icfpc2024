@@ -68,7 +68,18 @@ download :: String -> IO ()
 download name = do
   s <- getString name
   BS.writeFile ("answers/" ++ name) s
-  
+
+-- Usage:
+--
+-- > submitSolution "lambdaman1" "LLLDURRRUDRRURR"
+-- EStr "Correct, you solved lambdaman1 with a score of 33!\n"
+submitSolution :: String -> String -> IO Expr
+submitSolution name solution = do
+  ret <- postRaw ("solve " ++ name ++ " " ++ solution)
+  case ret of
+    Left err -> throwIO $ userError $ show err
+    Right expr -> return expr
+ 
 readToken :: IO BS.ByteString
 readToken = BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
 
