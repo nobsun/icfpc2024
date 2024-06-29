@@ -2,7 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 module Interp
-    ( Value (..)
+    ( ICFPC (..)
+    , Value (..)
     , Env
     , interpret
     , interp
@@ -38,25 +39,22 @@ instance Show a => Show (Value a) where
         VFun  _ -> ("[λ x . e]" ++) . (" :: Function" ++)
 
 class ICFPC a where
-    append  :: a -> a -> a
     taking  :: Int -> a -> a
     droping :: Int -> a -> a
     toICFPC :: ByteString -> a
     fromICFPC :: a -> ByteString
 
 instance ICFPC ICFPCString where
-    append x y = x <> y
     taking = Seq.take
     droping = Seq.drop
     toICFPC = toICFPCString . cultToHuman
     fromICFPC = humanToCult . fromICFPCString
 
 instance ICFPC ByteString where
-    append x y = x <> y
     taking = BS.take
     droping = BS.drop
-    toICFPC = id
-    fromICFPC = id
+    toICFPC = cultToHuman
+    fromICFPC = humanToCult
 
 interp :: (Eq a, Semigroup a, ICFPC a) => Env a -> Expr' a -> State Int (Value a)
 interp rho = \ case
