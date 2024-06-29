@@ -51,6 +51,7 @@ library:
   - Pretty
   - Eval
   - Interp
+  - ICFPCString
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:
