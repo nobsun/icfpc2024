@@ -1,0 +1,21 @@
+((λ v1 -> (λ v2 -> v1 (v2 v2)) (λ v2 -> v1 (v2 v2))) (λ v3 -> λ v4 -> ((λ v1 -> λ v2 -> 
+if v1 < v2
+then v1
+else v2
+) v4) (1 + (
+if v4 > 2
+then (((λ v1 -> (λ v2 -> v1 (v2 v2)) (λ v2 -> v1 (v2 v2))) (λ v5 -> λ v6 -> λ v7 -> 
+ if v6 = v4
+ then v7
+ else (v5 (v6 + 1)) (
+  if (v3 v6) > (v6 - 1)
+  then 
+   if (v4 % v6) = 0
+   then (v7 / (v3 v6)) * ((v3 v6) - 1)
+   else v7
+
+  else v7
+)
+)) 2) v4
+else v4
+)))) 1234567
