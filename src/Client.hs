@@ -96,6 +96,10 @@ submitSolution name solution = do
         Value.VInt n  -> print n
         Value.VFun _  -> BS.putStrLn "<function>"
 
+-- Usage
+--
+-- > submitExpr "lambdaman1" (EStr "LLLDURRRUDRRURR")
+-- Correct, you solved lambdaman1 with a score of 38!
 submitExpr :: String -> Expr -> IO ()
 submitExpr name solution = do
   ret <- postExpr $ EBinary Concat (EStr ("solve " <> BS.pack name <> " ")) solution
