@@ -35,7 +35,7 @@ data Expr
   | EIf Expr Expr Expr
   | ELambda !Var Expr
   | EVar !Var
-  deriving (Show, Eq)
+  deriving (Eq, Show, Read)
 
 
 type Var = Int
@@ -46,7 +46,7 @@ data UOp
   | Not
   | StrToInt
   | IntToStr
-  deriving (Eq, Ord, Enum, Show)
+  deriving (Eq, Ord, Enum, Show, Read)
 
 
 data BinOp
@@ -64,7 +64,7 @@ data BinOp
   | Take
   | Drop
   | Apply
-  deriving (Eq, Ord, Enum, Show)
+  deriving (Eq, Ord, Enum, Show, Read)
 
 
 type Token = ByteString
