@@ -70,7 +70,7 @@ getString name = do
 
 getExpr :: String -> IO Expr
 getExpr name = do
-  ret <- postRaw ("get " ++ name)
+  ret <- postString ("get " ++ name)
   case ret of
     Left err -> throwIO $ userError $ show err
     Right expr -> return expr
@@ -86,7 +86,7 @@ download name = do
 -- Correct, you solved lambdaman1 with a score of 33!
 submitSolution :: String -> String -> IO ()
 submitSolution name solution = do
-  ret <- postRaw ("solve " ++ name ++ " " ++ solution)
+  ret <- postString ("solve " ++ name ++ " " ++ solution)
   case ret of
     Left err -> throwIO $ userError $ show err
     Right expr -> do
@@ -95,15 +95,30 @@ submitSolution name solution = do
         Value.VBool b -> print b
         Value.VInt n  -> print n
         Value.VFun _  -> BS.putStrLn "<function>"
- 
+
+submitExpr :: String -> Expr -> IO ()
+submitExpr name solution = do
+  ret <- postExpr $ EBinary Concat (EStr ("solve " <> BS.pack name <> " ")) solution
+  case ret of
+    Left err -> throwIO $ userError $ show err
+    Right expr -> do
+      case Value.eval expr of
+        Value.VStr s  -> BS.putStr s
+        Value.VBool b -> print b
+        Value.VInt n  -> print n
+        Value.VFun _  -> BS.putStrLn "<function>"
+
 readToken :: IO BS.ByteString
 readToken = BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
 
-postRaw :: String -> IO (Either (ParseErrorBundle [BS.ByteString] Void) Expr)
-postRaw raw = do
+postString :: String -> IO (Either (ParseErrorBundle [BS.ByteString] Void) Expr)
+postString s = postExpr (EStr (BS.pack s))
+
+postExpr :: Expr -> IO (Either (ParseErrorBundle [BS.ByteString] Void) Expr)
+postExpr expr = do
   token <- readToken
 
-  let msg = encodeStr $ BS.pack raw
+  let msg = BS.unwords (encode expr)
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest "https://boundvariable.space/communicate"
   let req = initReq { method = "POST"
