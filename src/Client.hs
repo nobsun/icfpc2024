@@ -59,10 +59,10 @@ getString name = do
   case ret of
     Left err -> throwIO $ userError $ show err
     Right expr -> do
-      case eval [] expr of
+      case eval [] 0 expr of
         Left err -> throwIO (userError err)
-        Right (_, EStr s) -> return s
-        Right (_, expr2) -> throwIO $ userError $ "failed to evaluate to string: " ++ show expr2
+        Right (_, _, EStr s) -> return s
+        Right (_, _, expr2) -> throwIO $ userError $ "failed to evaluate to string: " ++ show expr2
 
 download :: String -> IO ()
 download name = do
