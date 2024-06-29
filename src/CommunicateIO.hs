@@ -19,5 +19,11 @@ communicate req = either fail pure . parseExpr . B8.pack  =<< communicate_ req
 communicate_ :: L8.ByteString -> IO String
 communicate_ = readProcess "./api/comm.sh" [] . L8.unpack
 
+command :: String -> String -> IO Expr
+command cmd x = communicate $ L8.fromChunks $ encode $ EStr $ fromString $ cmd <> " " <> x
+
 get :: String -> IO Expr
-get x = communicate $ L8.fromChunks $ encode $ EStr $ "get " <> fromString x
+get = command "get"
+
+echo :: String -> IO Expr
+echo = command "echo"
