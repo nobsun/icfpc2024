@@ -1,0 +1,1 @@
+EStr "# Input\n  `2 <= A <= 500`\n\n# Output\n  `1` if `A` is a prime number, and `0` otherwise.\n\n# Example\n  * `A = 5`\n    `Answer = 1`\n  * `A = 4`\n    `Answer = 0`\n"

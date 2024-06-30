@@ -1,0 +1,1 @@
+EStr "# Input\n  `1 <= A <= 9999999999`\n\n# Output\n  `1` if `A` is a palindrome (a number that is the same when reversed), and `0` otherwise.\n\n# Example\n  * `A = 1233321`\n    `Answer = 1`\n  * `A = 3123`\n    `Answer = 0`\n"

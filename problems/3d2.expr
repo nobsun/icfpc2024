@@ -1,0 +1,1 @@
+EStr "# Input\n  `-100 <= A <= 100`\n\n# Output\n  The absolute value of `A`.\n\n# Example\n  * `A = 3`\n    `Answer = 3`\n  * `A = -6`\n    `Answer = 6`\n"
