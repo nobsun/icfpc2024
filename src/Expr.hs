@@ -4,11 +4,13 @@
 module Expr
   ( Expr' (..)
   , Expr
+  , Binding (..)
   , Var
   , UOp (..)
   , BinOp (..)
   , Token
   , unELambdaVars
+  , deSugar
   , toELambdaVars
   , toExpr2
   , fromExpr2
@@ -46,7 +48,11 @@ data Expr' a
   | EIf (Expr' a) (Expr' a) (Expr' a)
   | ELambda !Var (Expr' a)
   | ELambdaVars ![Var] (Expr' a)
+  | ELet [Binding a] (Expr' a)
   | EVar !Var
+  deriving (Eq, Show, Read, Functor)
+
+data Binding a = B !BinOp !Var !(Expr' a)
   deriving (Eq, Show, Read, Functor)
 
 type Expr2 = Expr' ICFPCString
@@ -68,7 +74,24 @@ unELambdaVars   (ELambda x e)           = ELambda x (unELambdaVars e)
 unELambdaVars   (ELambdaVars [] e)      = unELambdaVars e  {- not reach -}
 unELambdaVars   (ELambdaVars [x] e)     = ELambda x (unELambdaVars e)
 unELambdaVars   (ELambdaVars (x:xs) e)  = ELambda x (unELambdaVars $ ELambdaVars xs e)
+unELambdaVars   (ELet bs e2)            = ELet [B ap x (unELambdaVars e1) | B ap x e1 <- bs] (unELambdaVars e2)
 unELambdaVars e@(EVar {})               = e
+
+deSugar :: Expr' a -> Expr' a
+deSugar e@(EBool {})                = e
+deSugar e@(EInt  {})                = e
+deSugar e@(EStr  {})                = e
+deSugar   (EUnary op e)             = EUnary op (deSugar e)
+deSugar   (EBinary op e1 e2)        = EBinary op (deSugar e1) (deSugar e2)
+deSugar   (EIf e1 e2 e3)            = EIf (deSugar e1) (deSugar e2) (deSugar e3)
+deSugar   (ELambda x e)             = ELambda x (deSugar e)
+deSugar   (ELambdaVars [] e)        = deSugar e  {- not reach -}
+deSugar   (ELambdaVars [x] e)       = ELambda x (deSugar e)
+deSugar   (ELambdaVars (x:xs) e)    = ELambda x (deSugar $ ELambdaVars xs e)
+deSugar   (ELet [] e2)              = deSugar e2  {- not reach -}
+deSugar   (ELet [B ap x e1] e2)     = EBinary ap (ELambda x (deSugar e2)) (deSugar e1)
+deSugar   (ELet (B ap x e1:bs) e2)  = EBinary ap (ELambda x (deSugar $ ELet bs e2)) (deSugar e1)
+deSugar e@(EVar {})                 = e
 
 -----
 
@@ -94,11 +117,13 @@ toELambdaVars = f
     f   (ELambdaVars xs e@(ELambda {}))      =  lambdas (xs++) e
     f   (ELambdaVars xs e@(ELambdaVars {}))  =  lambdas (xs++) e
     f   (ELambdaVars xs e)                   =  (ELambdaVars xs (toELambdaVars e))
+    f   (ELet bs e2)                         =  ELet [B ap x (toELambdaVars e1) | B ap x e1 <- bs] (toELambdaVars e2)
     f e@(EVar {})                            =  e
 
     lambdas xs (ELambda x e)       = lambdas (xs . (x:)) e
     lambdas xs (ELambdaVars ys e)  = lambdas (xs . (ys ++)) e
     lambdas xs  e                  = ELambdaVars (xs []) (toELambdaVars e)
+
 type Var = Int
 
 
@@ -144,7 +169,8 @@ encode (EUnary op e) = encodeUOp op : encode e
 encode (EBinary op e1 e2) = encodeBinOp op : encode e1 ++ encode e2
 encode (EIf e1 e2 e3) = tokenIf : encode e1 ++ encode e2 ++ encode e3
 encode (ELambda x e) = encodeLambda x : encode e
-encode e@(ELambdaVars {}) = encode $ unELambdaVars e
+encode e@(ELambdaVars {}) = encode $ deSugar e
+encode e@(ELet {}) = encode $ deSugar e
 encode (EVar x) = [encodeVar x]
 
 
@@ -248,7 +274,8 @@ fvs (EUnary _ e) = fvs e
 fvs (EBinary _ e1 e2) = fvs e1 `IntSet.union` fvs e2
 fvs (EIf e1 e2 e3) = IntSet.unions $ map fvs [e1, e2, e3]
 fvs (ELambda v e) = IntSet.delete v (fvs e)
-fvs e@(ELambdaVars {}) = fvs (unELambdaVars e)
+fvs e@(ELambdaVars {}) = fvs (deSugar e)
+fvs e@(ELet {}) = fvs (deSugar e)
 fvs (EVar v) = IntSet.singleton v
 
 
@@ -269,7 +296,8 @@ renameBoundVariables vs = f (IntMap.fromList [(v, v) | v <- IntSet.toAscList vs]
            in ELambda v2 (f m2 e)
       | otherwise =
           ELambda v (f (IntMap.insert v v m) e)
-    f m e@(ELambdaVars {}) = f m (unELambdaVars e)
+    f m e@(ELambdaVars {}) = f m (deSugar e)
+    f m e@(ELet {}) = f m (deSugar e)
     f m (EVar v) =
       case IntMap.lookup v m of
         Just v2 -> EVar v2
