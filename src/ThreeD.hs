@@ -1,11 +1,12 @@
+{-# LANGUAGE GHC2021 #-}
 module ThreeD where
 
 import Control.Monad (forM_)
 import Data.Char (ord, chr)
 import Data.Function (on)
-import Data.Hashable (Hashable, hashWithSalt, defaultHashWithSalt)
+import qualified Data.Map as Map
 import qualified Data.HashMap.Strict as Hash
-import Data.List -- (foldl', foldr, find, partition)
+import Data.List (foldl', foldr, find, partition)
 import Data.Maybe (fromJust, mapMaybe, isJust)
 import qualified Data.Set as Set
 
@@ -13,8 +14,8 @@ data Direction = L | R | U | D deriving (Show, Eq)
 data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq)
 data Logic = Eql | Neq deriving (Show, Eq)
 
-data Op3D = Move !Direction
-          | Calc !Arith
+data Op3D = Move  !Direction
+          | Calc  !Arith
           | Judge !Logic
           | Warp
           deriving (Show, Eq)
@@ -42,9 +43,6 @@ data Place = Operator !Op3D
            | Submit
            | Var !Char  -- 'A' and 'B' only
            deriving (Show, Eq)
-
-instance Hashable Place where
-  hashWithSalt = defaultHashWithSalt
 
 isOperator :: Place -> Bool
 isOperator (Operator _) = True
@@ -172,15 +170,18 @@ step hist@(g:_)
         
     (submitConflicts, writeConflicts) = (ss', ws')
       where
-        partitionOn :: (Ord b, Eq b) => (a -> b) -> [a] -> [[a]]
-        partitionOn accessor = groupBy ((==) `on` accessor) . sortBy (compare `on` accessor)
+        groupBy' :: forall a k. (Eq k, Ord k) => (a -> k) -> [a] -> [[a]]
+        groupBy' f = Map.elems . foldr phi Map.empty
+          where
+            phi :: a -> Map.Map k [a] -> Map.Map k [a]
+            phi x = Map.insertWith (<>) (f x) [x]
         
         ss, ws :: [(Cell, Place)]
         (ss, ws) = partition (\(c, _) -> c `elem` map fst sbmts) conflicts
         -- 同一の Submit Cell に対する Write は同じ値でなければ Conflict
-        ss' = filter (\xs -> not . and $ zipWith (/=) xs (tail xs)) $ partitionOn fst ss
+        ss' = filter (\xs -> not . and $ zipWith (/=) xs (tail xs)) $ groupBy' fst ss
         -- Submit Cell 以外は同一の Cell に対する Write は複数あったら Conflict
-        ws' = filter (\xs -> length xs > 1) $ partitionOn fst ws
+        ws' = filter (\xs -> length xs > 1) $ groupBy' fst ws
 
     done :: Maybe Update
     done = find f wrs
