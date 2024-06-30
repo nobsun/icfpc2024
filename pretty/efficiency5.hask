@@ -1,0 +1,21 @@
+(\ v6 -> (\ v7 -> ((\ v1 -> (\ v2 -> v1 (v2 v2)) (\ v2 -> v1 (v2 v2))) (\ v3 v4 -> 
+if (v4 > 1000000) && ((v6 v4) && (v7 (v4 + 1)))
+then v4
+else v3 (v4 + 1)
+)) 2) ((\ v1 -> (\ v2 -> v1 (v2 v2)) (\ v2 -> v1 (v2 v2))) (\ v3 v4 -> 
+if v4 == 1
+then True
+else 
+ if (v4 `quot` 2) == 1
+ then False
+ else v3 (v4 `rem` 2)
+
+))) (\ v5 -> ((\ v1 -> (\ v2 -> v1 (v2 v2)) (\ v2 -> v1 (v2 v2))) (\ v3 v4 -> 
+if v4 == v5
+then True
+else 
+ if (v5 `quot` v4) == 0
+ then False
+ else v3 (v4 + 1)
+
+)) 2)
