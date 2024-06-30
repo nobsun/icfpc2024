@@ -46,6 +46,7 @@ library:
   - Imports
   - Client
   - CommunicateIO
+  - CStore
   - Expr
   - Parser
   - ParserLib
