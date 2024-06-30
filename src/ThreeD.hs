@@ -1,5 +1,6 @@
 module ThreeD where
 
+import Data.List (unfoldr)
 import qualified Data.Set as Set
 import qualified Data.HashMap.Strict as Hash
 import Data.Hashable
@@ -15,7 +16,6 @@ data Op3D = Move Direction
           | Calc Arith
           | Judge Logic
           | Warp
-          -- | Submit -- ??
           deriving (Show, Eq)
 
 calc :: Arith -> Int -> Int -> Int
@@ -36,6 +36,7 @@ type Space = [(Tick, Grid)]
 
 data Place = Operator Op3D
            | Number   Int
+           | Submit
            | Var Char  -- 'A' and 'B' only
            deriving (Show, Eq)
 
@@ -49,6 +50,25 @@ isOperator _            = False
 
 operators :: Grid -> Hash.HashMap Cell Place
 operators = Hash.filter isOperator
+
+isSubmit :: Place -> Bool
+isSubmit Submit = True
+isSubmit _      = False
+
+submits :: Grid -> Set.Set Cell
+submits = Set.fromList . Hash.keys . Hash.filter isSubmit
+
+isVar :: Place -> Bool
+isVar (Var _) = True
+isVar _       = False
+
+vars :: Grid -> [(Char, Cell)]
+vars g = map (f . swap) $ Hash.toList vs
+  where
+    vs = Hash.filter isVar g
+    swap (a, b) = (b, a)
+    f (Var v, c) = (v, c)
+    f _ = error "vars: impossible"
 
 -- 各オペレータの読み取り対象セル
 sources :: Op3D -> Cell -> [Cell]
@@ -99,13 +119,16 @@ targets (Operator (Judge op)) (x, y) [(_, Number a), (_, Number b)]
 targets (Operator Warp) (x, y) [(_, v), (_, Number dx), (_, Number dy), dt]
   = [(d, v)] -- @
   where d = (x - dx, y - dy)
+targets _ _ _ = [] -- S, Var, Void
+
 
 data Updatable = Del (Cell, Place)
                | Upd (Cell, Place)
+               | Ban (Cell, Place)
                deriving (Show, Eq)
 
-updatables :: Grid -> [Updatable]
-updatables g = foldr phi [] ops
+updatables :: Set.Set Cell -> Grid -> [Updatable]
+updatables bombs g = foldr phi [] ops
   where
     phi :: (Cell, Place) -> [Updatable] -> [Updatable]
     phi cell@(c, p@(Operator _)) acc = xs ++ acc
@@ -120,10 +143,44 @@ updatables g = foldr phi [] ops
     ops = Hash.toList $ operators g
 
 -- | TODO: conflict の検出はまだ。Submit があるのでちょっとややこしい
-step :: Grid -> Grid
-step g = undefined
+step :: Set.Set Cell -> Grid -> (Maybe Place, Grid)
+step bombs g = foldr phi (Nothing, g) upd
+  where
+    phi :: Updatable -> (Maybe Place, Grid) -> (Maybe Place, Grid)
+    phi (Del (c, _)) (b, g') = (b, Hash.delete c g')
+    phi (Upd (c, p)) (b, g') = (b, Hash.insert c p g')
+    phi (Ban (c, _)) (b, g') = (b, Hash.delete c g')
+    
+    upd = updatables bombs g
 
-               
+run :: Grid -> Space
+run g = unfoldr psi (0, g)
+  where
+    psi :: (Tick, Grid) -> Maybe ((Tick, Grid), (Tick, Grid))
+    psi (t, g) | isNothing boom = Just ((t, g), (t+1, g'))
+               | otherwise   = Nothing
+
+    (boom, g') = step bombs g
+
+    bombs :: Set.Set Cell
+    bombs = submits g
+
+initBy :: [(Char, Int)] -> Grid -> Grid
+initBy vals g = g'
+  where
+    g' = foldr phi g vals
+      where
+        phi :: (Char, Int) -> Grid -> Grid
+        phi (v, n) = Hash.insert c (Number n)
+          where
+            Just c = lookup v vs
+
+        vs = vars g
+
+runWith :: [(Char, Int)] -> Grid -> Space
+runWith vals g = run $ initBy vals g        
+
+            
 {- | Grid Layout
   0 1 2
 0 . y .
@@ -135,3 +192,43 @@ sample = Hash.fromList [ ((0,1), Number 5) -- x
                        , ((1,0), Number 3) -- y
                        , ((1,1), Operator (Calc Sub))
                        ]
+
+--   0 1 2 3 4 5 6 7 8
+-- 0 . . . . 0 . . . .
+-- 1 . B > . = . . . .
+-- 2 . v 1 . . > . . .
+-- 3 . . - . . . + S .
+-- 4 . . . . . ^ . . .
+-- 5 . . v . . 0 > . .
+-- 6 . . . . . . A + .
+-- 7 . 1 @ 6 . . < . .
+-- 8 . . 3 . 0 @ 3 . .
+-- 9 . . . . . 3 . . .
+--
+game :: Grid
+game = Hash.fromList [ ((0,4), Number 0)
+                     , ((1,1), Var 'B')
+                     , ((1,2), Operator (Move R))
+                     , ((1,4), Operator (Judge Eql))
+                     , ((2,1), Operator (Move D))
+                     , ((2,2), Number 1)
+                     , ((2,5), Operator (Move R))
+                     , ((3,2), Operator (Calc Sub))
+                     , ((3,6), Operator (Calc Add))
+                     , ((3,7), Submit)
+                     , ((4,5), Operator (Move U))
+                     , ((5,2), Operator (Move D))
+                     , ((5,5), Number 0)
+                     , ((5,6), Operator (Move R))
+                     , ((6,6), Var 'A')
+                     , ((6,7), Operator (Calc Add))
+                     , ((7,1), Number 1)
+                     , ((7,2), Operator Warp)
+                     , ((7,3), Number 6)
+                     , ((7,6), Operator (Move L))
+                     , ((8,2), Number 3)
+                     , ((8,4), Number 0)
+                     , ((8,5), Operator Warp)
+                     , ((8,6), Number 3)
+                     , ((9,5), Number 3)
+                     ]
