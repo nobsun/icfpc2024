@@ -22,7 +22,7 @@ data Op3D = Move Direction
 
 calc :: Arith -> Place -> Place -> Place
 calc Add  (Number x) (Number y) = Number (x+y)
-calc Sub  (Number x) (Number y) = Number (max (x-y) 0)
+calc Sub  (Number x) (Number y) = Number (x-y)
 calc Mul  (Number x) (Number y) = Number (x*y)
 calc Quot (Number x) (Number y) = Number (x `quot` y)
 calc Rem  (Number x) (Number y) = Number (x `rem` y)
@@ -146,7 +146,7 @@ step hist@(g:gs)
         phi :: Update -> Grid -> Grid
         phi (Erase cs) h = foldr (Hash.delete . fst) h cs
         phi (Write cs) h = foldr (uncurry Hash.insert) h cs
-        phi (TimeWarp t (c, p)) h = h -- Hash.insert c p $ gs !! (t-1)
+        phi (TimeWarp t (c, p)) h = h -- NOTE: submit の時には何もしない
     
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
