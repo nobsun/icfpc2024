@@ -132,12 +132,12 @@ initBy vals g = g'
 
         vs = vars g
 
-step :: Space -> Space
-step [] = []
+step :: Space -> (Maybe Int, Space)
+step [] = (Nothing, [])
 step hist@(g:gs)
-  | isJust done = undefined
+  | isJust done = (retVal, g':hist)
   | not (null warps) = undefined
-  | otherwise = g':hist
+  | otherwise = (Nothing, g':hist)
   where
     g' = foldr phi g upds
       where
@@ -161,6 +161,12 @@ step hist@(g:gs)
         
     sbmts :: [(Cell, Place)]
     sbmts = filter (isSubmit . snd) $ Hash.toList g
+
+    retVal :: Maybe Int
+    retVal = do
+      Write ((_, Number v):_) <- done
+      return v
+
 
     done :: Maybe Update
     done = find f wrs
