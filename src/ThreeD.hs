@@ -1,5 +1,6 @@
 module ThreeD where
 
+import qualified Data.Set as Set
 import Control.Arrow
 import Data.Maybe
 import Data.Void (Void)
@@ -36,7 +37,7 @@ sources (Move D) (x,y) = [(x,   y-1)] -- v
 sources (Calc o) (x,y) = [arg1, arg2] -- +, -, *, /, %, =, #
   where arg1 = (x-1, y  )
         arg2 = (x,   y-1)
-sources Warp     (x,y) = [dx,dy,dt,v] -- @
+sources Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように先頭に
   where dx = (x-1, y  )
         dy = (x+1, y  )
         dt = (x,   y+1)
@@ -49,6 +50,7 @@ getSourceCells g (p, Operator o)
 getSourceCells _ _ = []
 
 -- 各オペレータの書き込み対象セル
+-- ただし、これが呼ばれるときは Warpは書き込み対象セルが渡っている前提です
 targets :: Op3D -> Cell -> Grid -> [Cell]
 targets (Move L) (x,y) g = [(x-1, y  )] -- <
 targets (Move R) (x,y) g = [(x+1, y  )] -- >
@@ -60,26 +62,49 @@ targets (Calc o) (x,y) g = [arg1, arg2] -- +, -, *, /, %, =, #
 targets Warp     (x,y) g = [(x - vx, y - vy)] -- @
   where dx  = (x-1, y  )
         dy  = (x+1, y  )
-        -- FIXME: 乱暴だけど
+        -- 乱暴だけど大丈夫
         Number vx = fromJust $ lookup dx g
         Number vy = fromJust $ lookup dy g
 targets _        _     g = [] -- S, Var, Void
 
-getTargetCells :: Grid -> (Cell, Place) -> [(Cell, Maybe Place)]
+getTargetCells :: Grid -> (Cell, Place) -> [(Cell, Place)]
 getTargetCells g (p, Operator o)
-  = [ (c, t) | c <- targets o p g, let t = lookup c g]
+  = [ (c, t) | c <- targets o p g, let Just t = lookup c g] -- 乱暴だけど大丈夫
 getTargetCells _ _ = []
 
+conflict :: [Cell] -> [Cell]
+conflict cs = Set.toList $ foldl phi Set.empty cs
+  where
+    phi :: Set.Set Cell -> Cell -> Set.Set Cell
+    phi s c = if Set.member c s then Set.insert c s else s
 
 step :: Grid -> Grid
-step g = undefined
+step g | not (null conflicts) = error "conflict occured"
+       | otherwise = writein $ readout g
   where
+    readout :: Grid -> Grid
+    readout g = undefined
+      where
+        ro :: [Cell]
+        ro = concatMap f ss'
+          where f ((_, Operator (Move _)), xs ) = map fst xs
+                f ((_, Operator (Calc _)), xs ) = map fst xs
+                f ((_, Operator Warp    ), v:_) = [fst v]
+                f _                             = []
+    
+    writein :: Grid -> Grid
+    writein g = undefined
+    
     ops :: [(Cell, Place)]
     ops = filter (isOperator . snd) g
     ss :: [((Cell, Place), [(Cell, Maybe Place)])]
     ss = map (id &&& getSourceCells g) ops
     ss' :: [((Cell, Place), [(Cell, Place)])]
     ss' = map (second (mapMaybe sequenceA)) ss
+    ts :: [((Cell, Place), [(Cell, Place)])]
+    ts = map (id &&& getTargetCells g) ops
+    conflicts :: [(Cell, Place)]
+    conflicts = concatMap snd ts
 
 {- | Grid Layout
   0 1 2
@@ -89,11 +114,12 @@ step g = undefined
 -}
 test1 :: Bool
 test1 = step s == e
-s = [ ((0,1), Number 5) -- x
-    , ((1,0), Number 3) -- y
-    , ((1,1), Operator (Calc Sub))
-    ]
-e = [ ((1,2), Number 2) -- x-y
-    , ((2,1), Number 2) -- x-y
-    , ((1,1), Operator (Calc Sub))
-    ]
+  where
+    s = [ ((0,1), Number 5) -- x
+        , ((1,0), Number 3) -- y
+        , ((1,1), Operator (Calc Sub))
+        ]
+    e = [ ((1,2), Number 2) -- x-y
+        , ((2,1), Number 2) -- x-y
+        , ((1,1), Operator (Calc Sub))
+        ]
