@@ -4,9 +4,9 @@ module ThreeD where
 import Control.Monad (forM_)
 import Data.Char (ord, chr)
 import Data.Function (on)
-import qualified Data.Map as Map
 import qualified Data.HashMap.Strict as Hash
 import Data.List (foldl', foldr, find, partition)
+import qualified Data.Map as Map
 import Data.Maybe (fromJust, mapMaybe, isJust)
 import qualified Data.Set as Set
 
