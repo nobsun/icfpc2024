@@ -25,6 +25,13 @@ instance IsString PPString where
 showpp :: Show a => a -> PPString
 showpp = pps . show
 
+(<+>) :: PPString -> PPString -> PPString
+s1 <+> s2 = s1 <> " " <> s2
+
+unwordspp :: [PPString] -> PPString
+unwordspp  []     = mempty
+unwordspp (w:ws)  = foldl' (<+>) w ws
+
 -----
 
 pprInfix :: Expr -> String
@@ -48,6 +55,7 @@ pprExpr cx e0 = case e0 of
   EBinary op e1 e2   -> pprBinary cx op e1 e2
   EIf e1 e2 e3       -> pprIf cx e1 e2 e3
   ELambda v e        -> pprLambda cx v e
+  ELambdaVars vs e   -> pprLambdaVars cx vs e
   EVar v             -> pprVar v
 
 pprBool :: Bool -> PPString
@@ -114,7 +122,10 @@ pprIf (pf, ilv) e1 e2 e3 =
         indent = pps $ replicate ilv ' '
 
 pprLambda :: Cxt -> Var -> Expr -> PPString
-pprLambda pf v e = "λ" <+> pprVar v <+> "->" <+> pprExpr pf e
+pprLambda pf v e = pprLambdaVars pf [v] e
+
+pprLambdaVars :: Cxt -> [Var] -> Expr -> PPString
+pprLambdaVars pf vs e = "λ" <+> unwordspp (map pprVar vs) <+> "->" <+> pprExpr pf e
 
 pprVar :: Var -> PPString
 pprVar v = "v" <> showpp v
@@ -139,9 +150,6 @@ paren s = "(" <> s <> ")"
 
 dquote :: PPString -> PPString
 dquote s = "\"" <> s <> "\""
-
-(<+>) :: PPString -> PPString -> PPString
-s1 <+> s2 = s1 <> " " <> s2
 
 -----
 
