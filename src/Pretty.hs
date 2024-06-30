@@ -45,14 +45,14 @@ data PPFix
   = PInfix
   | PPrefix
 
-data OutMode
+data PPOutput
   = Haskell
   | LangICFP
 
 data Cxt =
   Cxt
   { ppFix :: PPFix
-  , ppOutMode :: OutMode
+  , ppPPOutput :: PPOutput
   , ppIfIndent :: Int
   }
 
