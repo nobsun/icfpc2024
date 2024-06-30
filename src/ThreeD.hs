@@ -144,7 +144,7 @@ step hist@(g:gs)
         phi :: Update -> Grid -> Grid
         phi (Erase cs) h = foldr (Hash.delete . fst) h cs
         phi (Write cs) h = foldr (uncurry Hash.insert) h cs
-        phi (TimeWarp t (c, p)) _ = Hash.insert c p $ gs !! (t-1)
+        phi (TimeWarp t (c, p)) h = h -- Hash.insert c p $ gs !! (t-1)
     
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
