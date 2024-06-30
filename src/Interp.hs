@@ -97,8 +97,13 @@ interp rho = \ case
                 | otherwise -> interp rho e2
         _ -> pure (VBottom "condition is not boolean")
     EVar v -> fromMaybe (pure (VBottom "unbounded variable")) $ M.lookup v rho
-    ELambda v e -> pure 
+    ELambda v e -> pure
         $ VFun (\ a -> interp (M.insert v a rho) e)
+    ELambdaVars [] e  -> interp rho e  {- not reach -}
+    ELambdaVars [v] e  -> pure
+        $ VFun (\ a -> interp (M.insert v a rho) e)
+    ELambdaVars (v:vs) e -> pure
+        $ VFun (\ a -> interp (M.insert v a rho) (ELambdaVars vs e))
 
 exUOp :: (ICFPC a) => UOp -> Value a -> State Int (Value a)
 exUOp uop val = case uop of
