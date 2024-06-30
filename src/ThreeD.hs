@@ -1,5 +1,6 @@
 module ThreeD where
 
+import Control.Monad
 import Data.Char (ord, chr)
 import Data.List
 import qualified Data.Set as Set
@@ -73,7 +74,6 @@ vars g = map (f . swap) $ Hash.toList vs
 data Update = Erase [(Cell, Place)]
             | Write [(Cell, Place)]
             | TimeWarp Tick (Cell, Place)
-            | Done
             deriving (Show, Eq)
 
 -- 各オペレータの読み取り対象セル
@@ -145,7 +145,6 @@ step hist@(g:gs)
         phi (Erase cs) h = foldr (Hash.delete . fst) h cs
         phi (Write cs) h = foldr (uncurry Hash.insert) h cs
         phi (TimeWarp t (c, p)) _ = Hash.insert c p $ gs !! (t-1)
-        phi Done h = h
     
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
@@ -162,17 +161,16 @@ step hist@(g:gs)
     sbmts :: [(Cell, Place)]
     sbmts = filter (isSubmit . snd) $ Hash.toList g
 
+    done :: Maybe Update
+    done = find f wrs
+      where
+        f (Write cs) = any (\(c, _) -> c `elem` map fst sbmts) cs
+        f _          = False
+
     retVal :: Maybe Int
     retVal = do
       Write ((_, Number v):_) <- done
       return v
-
-
-    done :: Maybe Update
-    done = find f wrs
-      where
-        f (Write cs) = all (\(c, _) -> c `elem` map fst sbmts) cs
-        f _          = False
     
     warps :: [Update]
     warps = filter isWarp upds
@@ -181,12 +179,19 @@ step hist@(g:gs)
         isWarp _              = False
 
     -- Timewarp がある場合は全て同じ Tick に戻るはず
-    timewarp = foldr (\(TimeWarp _ (c, p)) h -> Hash.insert c p h) (hist !! t) warps
+    timewarp = foldr phi (hist !! t) warps
       where
+        phi (TimeWarp _ (c, p)) = Hash.insert c p
         TimeWarp t _ = head warps
 
 runAndDrawWith :: (Int, Int) -> [(Char, Int)] -> Grid -> IO ()
-runAndDrawWith wh vals g = undefined
+runAndDrawWith wh vals g = do
+  forM_ (zip [1..] gs) $ \(t, g) -> do
+    putStrLn $ "Step " ++ show t ++ ":"
+    drawGame wh g
+    putStrLn ""
+  putStrLn $ "Result: " ++ show v
+  where (v, gs) = runWith vals g
 
 runWith :: [(Char, Int)] -> Grid -> (Int, Space)
 runWith vals g = run $ initBy vals g
@@ -197,7 +202,7 @@ run g = go [g]
     go :: Space -> (Int, Space)
     go gs = case step gs of
       (Nothing, gs') -> go gs'
-      (Just v,  gs') -> (v, gs')
+      (Just v,  gs') -> (v, reverse gs')
 
 drawGame :: (Int, Int) -> Grid -> IO ()
 drawGame (w, h) g = putStrLn $ showGame (w, h) g
