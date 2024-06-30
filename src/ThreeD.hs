@@ -2,9 +2,10 @@ module ThreeD where
 
 import Control.Monad (forM_)
 import Data.Char (ord, chr)
+import Data.Function (on)
 import Data.Hashable (Hashable, hashWithSalt, defaultHashWithSalt)
 import qualified Data.HashMap.Strict as Hash
-import Data.List (foldl', foldr, find)
+import Data.List -- (foldl', foldr, find, partition)
 import Data.Maybe (fromJust, mapMaybe, isJust)
 import qualified Data.Set as Set
 
@@ -135,6 +136,8 @@ initBy vals g = g'
 step :: Space -> (Maybe Int, Space)
 step [] = (Nothing, [])
 step hist@(g:_)
+  | not (null submitConflicts) = error $ "submit conflict occured: " ++ show submitConflicts
+  | not (null writeConflicts)  = error $ "write conflict occured: " ++ show writeConflicts
   | isJust done      = (retVal, g':hist)
   | not (null warps) = (Nothing, timewarp:hist)
   | otherwise        = (Nothing, g':hist)
@@ -160,6 +163,24 @@ step hist@(g:_)
         
     sbmts :: [(Cell, Place)]
     sbmts = filter (isSubmit . snd) $ Hash.toList g
+
+    conflicts :: [(Cell, Place)]
+    conflicts = concatMap f wrs
+      where
+        f (Write cs) = cs
+        f u          = error $ "unexpected update: " ++ show u
+        
+    (submitConflicts, writeConflicts) = (ss', ws')
+      where
+        partitionOn :: (Ord b, Eq b) => (a -> b) -> [a] -> [[a]]
+        partitionOn accessor = groupBy ((==) `on` accessor) . sortBy (compare `on` accessor)
+        
+        ss, ws :: [(Cell, Place)]
+        (ss, ws) = partition (\(c, _) -> c `elem` map fst sbmts) conflicts
+        -- 同一の Submit Cell に対する Write は同じ値でなければ Conflict
+        ss' = filter (\xs -> not . and $ zipWith (/=) xs (tail xs)) $ partitionOn fst ss
+        -- Submit Cell 以外は同一の Cell に対する Write は複数あったら Conflict
+        ws' = filter (\xs -> length xs > 1) $ partitionOn fst ws
 
     done :: Maybe Update
     done = find f wrs
