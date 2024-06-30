@@ -72,23 +72,27 @@ vars g = map (f . swap) $ Hash.toList vs
     f _ = error "vars: impossible"
 
 -- 各オペレータの読み取り対象セル
-sources :: Op3D -> Cell -> [Cell]
-sources (Move L) (x,y) = [(x+1, y  )] -- <
-sources (Move R) (x,y) = [(x-1, y  )] -- >
-sources (Move U) (x,y) = [(x,   y+1)] -- ^
-sources (Move D) (x,y) = [(x,   y-1)] -- v
-sources (Calc o) (x,y) = [arg1, arg2] -- +, -, *, /, %
+sources :: Grid -> Op3D -> Cell -> [Cell]
+sources g (Move L) (x,y) = [(x+1, y  )] -- <
+sources g (Move R) (x,y) = [(x-1, y  )] -- >
+sources g (Move U) (x,y) = [(x,   y+1)] -- ^
+sources g (Move D) (x,y) = [(x,   y-1)] -- v
+sources g (Calc o) (x,y) = [arg1, arg2] -- +, -, *, /, %
   where arg1 = (x-1, y  )
         arg2 = (x,   y-1)
-sources (Judge o) (x,y) = [arg1, arg2] -- =, #
+sources g (Judge o) (x,y) | valid = [arg1, arg2] -- =, #
+                          | otherwise = []
   where arg1 = (x-1, y  )
         arg2 = (x,   y-1)
-sources Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように先頭に
+        -- NOTE: ここでチェックしないと消すの面倒になる
+        valid = let (a, b) = (Hash.lookup arg1 g, Hash.lookup arg2 g)
+                in (isJust a && isJust b && a == b)
+sources g Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように先頭に
   where dx = (x-1, y  )
         dy = (x+1, y  )
         dt = (x,   y+1)
         v  = (x,   y-1)
-sources _        _     = [] -- S, Var, Void
+sources _ _        _     = [] -- S, Var, Void
 
 -- | すべての snd が Just なら [(a, b)] は同じ要素数で Just を除去
 --   ひとつでも Nothing があれば空リストを返す
@@ -102,7 +106,7 @@ squash = go []
 
 getSourceCells :: Grid -> (Cell, Place) -> [(Cell, Place)]
 getSourceCells g (p, Operator o)
-  = squash [ (c, t) | c <- sources o p, let t = Hash.lookup c g]
+  = squash [ (c, t) | c <- sources g o p, let t = Hash.lookup c g]
 getSourceCells _ _ = []
 
 
