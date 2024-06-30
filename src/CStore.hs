@@ -10,9 +10,13 @@ import Imports
 import Expr (Expr)
 import qualified CommunicateIO as Comm
 import qualified CustomParser as Parser
+import qualified Pretty
 
 problemsDir :: FilePath
 problemsDir = "problems"
+
+prettyDir :: String
+prettyDir = "pretty"
 
 ---
 
@@ -20,6 +24,9 @@ data EntryType
   = ELang
   | EExpr
   | EOut
+  | EHask
+  | EInfix
+  | EPrefix
   deriving (Eq, Ord)
 
 type FileEntry = (String, EntryType)
@@ -35,6 +42,9 @@ entryType ext = case ext of
   ".lang"  -> Just ELang
   ".expr"  -> Just EExpr
   ".out"   -> Just EOut
+  ".hask"    -> Just EHask
+  ".infix"   -> Just EInfix
+  ".preifx"  -> Just EPrefix
   _        -> Nothing
 
 etypeName :: EntryType -> String
@@ -42,6 +52,9 @@ etypeName ty = case ty of
   ELang  -> "lang"
   EExpr  -> "expr"
   EOut   -> "out"
+  EHask    -> "hask"
+  EInfix   -> "infix"
+  EPrefix  -> "prefix"
 
 ---
 
@@ -122,6 +135,18 @@ loadLangExpr pname = do
   let epath = problemsDir </> pname <.> etypeName EExpr
   putStrLn $ "loading " ++ epath ++ " ..."
   readIO =<< readFile epath
+
+storePPR :: String -> IO ()
+storePPR pname = do
+  expr <- loadLangExpr pname
+  write expr EHask    Pretty.pprHaskell
+  write expr EInfix   Pretty.pprInfix
+  write expr EPrefix  Pretty.pprPrefix
+  where
+    write expr etype ppr = do
+      let path = prettyDir </> pname <.> etypeName etype
+      putStrLn $ "writing " ++ path ++ " ..."
+      writeFile' path (ppr expr)
 
 ---
 
