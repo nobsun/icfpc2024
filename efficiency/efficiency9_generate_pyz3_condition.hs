@@ -23,13 +23,5 @@ exprToZ3PyExpr :: Expr -> String
 exprToZ3PyExpr (EVar n) = "v[" ++ show n ++ "]"
 exprToZ3PyExpr (EUnary Not e) = "z3.Not(" ++ exprToZ3PyExpr e ++ ")"
 exprToZ3PyExpr e@(EBinary Eql e1 e2) = exprToZ3PyExpr e1 ++ " == " ++ exprToZ3PyExpr e2
-exprToZ3PyExpr e@(EBinary And _ _) = "z3.And(" ++ (intercalate ", " (map exprToZ3PyExpr (collectAnd e))) ++ ")"
-  where
-    collectAnd :: Expr -> [Expr]
-    collectAnd (EBinary And e1 e2) = collectAnd e1 ++ collectAnd e2
-    collectAnd e = [e]
-exprToZ3PyExpr e@(EBinary Or _ _) = "z3.Or(" ++ (intercalate ", " (map exprToZ3PyExpr (collectOr e))) ++ ")"
-  where
-    collectOr :: Expr -> [Expr]
-    collectOr (EBinary Or e1 e2) = collectOr e1 ++ collectOr e2
-    collectOr e = [e]
+exprToZ3PyExpr e@(EBinary And _ _) = "z3.And(" ++ (intercalate ", " (map exprToZ3PyExpr (collectConjuncts e))) ++ ")"
+exprToZ3PyExpr e@(EBinary Or _ _) = "z3.Or(" ++ (intercalate ", " (map exprToZ3PyExpr (collectDisjuncts e))) ++ ")"

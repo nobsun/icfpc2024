@@ -20,6 +20,8 @@ module Expr
   , cultToHuman
   , fvs
   , renameBoundVariables
+  , collectConjuncts
+  , collectDisjuncts
   ) where
 
 import Data.ByteString.Char8 (ByteString)
@@ -272,3 +274,13 @@ renameBoundVariables vs = f (IntMap.fromList [(v, v) | v <- IntSet.toAscList vs]
       case IntMap.lookup v m of
         Just v2 -> EVar v2
         Nothing -> EVar v
+
+
+collectConjuncts :: Expr -> [Expr]
+collectConjuncts (EBinary And e1 e2) = collectConjuncts e1 ++ collectConjuncts e2
+collectConjuncts e = [e]
+
+
+collectDisjuncts :: Expr -> [Expr]
+collectDisjuncts (EBinary Or e1 e2) = collectDisjuncts e1 ++ collectDisjuncts e2
+collectDisjuncts e = [e]
