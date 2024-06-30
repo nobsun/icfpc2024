@@ -38,7 +38,7 @@ pprInfix :: Expr -> String
 pprInfix = ppsString . pprExpr (PInfix, 0)
 
 pprPrefix :: Expr -> String
-pprPrefix = ppsString . pprExpr (PInfix, 0)
+pprPrefix = ppsString . pprExpr (PPrefix, 0)
 
 data PprFix
   = PInfix
