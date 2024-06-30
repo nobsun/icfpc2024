@@ -32,6 +32,9 @@ getExpr arg = communicateExpr $ command "get" [arg]
 get :: String -> IO Expr
 get = getExpr
 
+getLang :: String -> IO String
+getLang arg = communicate $ command "get" [arg]
+
 getPrint :: String -> IO ()
 getPrint arg = do
   expr <- get arg
