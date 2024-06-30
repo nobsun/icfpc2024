@@ -5,9 +5,10 @@ import Control.Concurrent
 import qualified Data.ByteString.Char8 as B8
 import System.Directory
 import System.FilePath
+import Text.Read (readMaybe)
 
 import Imports
-import Expr (Expr)
+import Expr (Expr' (EStr), Expr)
 import qualified CommunicateIO as Comm
 import qualified CustomParser as Parser
 import qualified Pretty
@@ -87,7 +88,18 @@ _3dProblems :: [String]
 _3dProblems = [ "3d" <> show n | n <- [1 .. 12 :: Int] ]
 
 _efficiencyProblems :: [String]
-_efficiencyProblems = [ "efficiency" <> show n | n <- [1 .. 14 :: Int] ]
+_efficiencyProblems = [ "efficiency" <> show n | n <- [1 .. 13 :: Int] ]
+
+allList :: [String]
+allList =
+  concat
+  [ catalogList
+  , problemList
+  , _lambdamanProblems
+  , _spaceshipProblems
+  , _3dProblems
+  , _efficiencyProblems
+  ]
 
 ---
 
@@ -123,7 +135,10 @@ storeLangExpr pname = do
   let epath = problemsDir </> pname <.> etypeName EExpr
   putStrLn $ "loading " ++ lpath ++ " ..."
   eexpr <- Parser.parseExpr_ <$> B8.readFile lpath
-  let write expr = do
+  let write (EStr s) = do
+        putStrLn $ "writing top-level EStr string " ++ epath ++ " ..."
+        B8.writeFile epath s
+      write expr = do
         putStrLn $ "writing " ++ epath ++ " ..."
         writeFile epath (show expr <> "\n")
         putStrLn "done."
@@ -134,7 +149,11 @@ loadLangExpr :: String -> IO Expr
 loadLangExpr pname = do
   let epath = problemsDir </> pname <.> etypeName EExpr
   putStrLn $ "loading " ++ epath ++ " ..."
-  readIO =<< readFile epath
+  expr <- readFile epath
+  let fallback = do
+        putStrLn $ "fallback to raw string mode " ++ epath ++ " ..."
+        pure . EStr $ B8.pack expr
+  maybe fallback pure $ readMaybe expr
 
 storePPR :: String -> IO ()
 storePPR pname = do
