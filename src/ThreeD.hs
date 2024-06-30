@@ -19,21 +19,21 @@ data Op3D = Move Direction
           | Warp
           deriving (Show, Eq)
 
-calc :: Arith -> Int -> Int -> Int
-calc Add  = (+)
-calc Sub  = (-)
-calc Mul  = (*)
-calc Quot = div
-calc Rem  = rem
+calc :: Arith -> Place -> Place -> Place
+calc Add  (Number x) (Number y) = Number (x+y)
+calc Sub  (Number x) (Number y) = Number (x-y)
+calc Mul  (Number x) (Number y) = Number (x*y)
+calc Quot (Number x) (Number y) = Number (x `quot` y)
+calc Rem  (Number x) (Number y) = Number (x `rem` y)
 
-judge :: Logic -> Int -> Int -> Bool
-judge Eql = (==)
-judge Neq = (/=)
+judge :: Logic -> Place -> Place -> Bool
+judge Eql (Number x) (Number y) = x == y
+judge Neq (Number x) (Number y) = x /= y
 
 type Cell = (Int, Int)
 type Grid = Hash.HashMap Cell Place
 type Tick = Int
-type Space = [(Tick, Grid)]
+type Space = [Grid]
 
 data Place = Operator Op3D
            | Number   Int
@@ -43,10 +43,6 @@ data Place = Operator Op3D
 
 instance Hashable Place where
   hashWithSalt = defaultHashWithSalt
-
-isWarp :: Place -> Bool
-isWarp (Operator Warp) = True
-isWarp _               = False
 
 isOperator :: Place -> Bool
 isOperator (Operator _) = True
@@ -74,7 +70,55 @@ vars g = map (f . swap) $ Hash.toList vs
     f (Var v, c) = (v, c)
     f _ = error "vars: impossible"
 
+data Update = Erase [(Cell, Place)]
+            | Write [(Cell, Place)]
+            | TimeWarp Tick (Cell, Place)
+            | Done
+            deriving (Show, Eq)
+
 -- 各オペレータの読み取り対象セル
+operate :: Grid -> (Cell, Place) -> [Update]
+operate g ((x, y), Operator (Move L)) = maybe [] f q  -- <
+  where q = Hash.lookup (x+1, y) g
+        f r = [ Erase [((x+1, y), r)], Write [((x-1, y), r)]]
+operate g ((x, y), Operator (Move R)) = maybe [] f q  -- >
+  where q = Hash.lookup (x-1, y) g
+        f r = [ Erase [((x-1, y), r)], Write [((x+1, y), r)]]
+operate g ((x, y), Operator (Move U)) = maybe [] f q  -- ^
+  where q = Hash.lookup (x, y+1) g
+        f r = [ Erase [((x, y+1), r)], Write [((x, y-1), r)]]
+operate g ((x, y), Operator (Move D)) = maybe [] f q  -- v
+  where q = Hash.lookup (x, y-1) g
+        f r = [ Erase [((x, y-1), r)], Write [((x, y+1), r)]]
+operate g ((x, y), Operator (Calc op))
+  = maybe [] f r
+  where p = Hash.lookup (x-1, y) g
+        q = Hash.lookup (x, y-1) g
+        r = do { p' <- p; q' <- q; return (p', q', calc op p' q') }
+        f (a, b, c) = [ Erase [((x-1, y), a), ((x, y-1), b)]
+              , Write [((x+1, y), c), ((x, y+1), c)]]
+operate g ((x, y), Operator (Judge op))
+  = maybe [] f r
+  where p = Hash.lookup (x-1, y) g
+        q = Hash.lookup (x, y-1) g
+        r = do { p' <- p; q' <- q; return (judge op p' q', p', q') }
+        f (c, a, b)
+          | c = [ Erase [((x-1, y), a), ((x, y-1), b)]
+                , Write [((x+1, y), a), ((x, y+1), b)]]
+          | otherwise = []
+operate g ((x, y), Operator Warp) = maybe [] f dr
+  where dx = Hash.lookup (x-1, y) g
+        dy = Hash.lookup (x+1, y) g
+        dt = Hash.lookup (x, y+1) g
+        dv = Hash.lookup (x, y-1) g
+        dr :: Maybe (Cell, Tick, Place)
+        dr = do { Number dx' <- dx
+                ; Number dy' <- dy
+                ; Number dt' <- dt
+                ; dv' <- dv
+                ; return ((dx', dy'), dt', dv')
+                }
+        f (c, t, v) = [TimeWarp t (c, v)]
 
 initBy :: [(Char, Int)] -> Grid -> Grid
 initBy vals g = g'
@@ -87,6 +131,48 @@ initBy vals g = g'
             Just c = lookup v vs
 
         vs = vars g
+
+step :: Space -> Space
+step [] = []
+step hist@(g:gs)
+  | isJust done = undefined
+  | not (null warps) = undefined
+  | otherwise = g':hist
+  where
+    g' = foldr phi g upds
+      where
+        phi :: Update -> Grid -> Grid
+        phi (Erase cs) h = foldr (Hash.delete . fst) h cs
+        phi (Write cs) h = foldr (uncurry Hash.insert) h cs
+        phi (TimeWarp t (c, p)) _ = Hash.insert c p $ gs !! t
+        phi Done h = h
+    
+    ops :: [(Cell, Place)]
+    ops = Hash.toList $ operators g
+
+    upds :: [Update]
+    upds = concatMap (operate g) ops
+
+    wrs :: [Update]
+    wrs = filter f upds
+      where
+        f (Write _) = True
+        f _         = False
+        
+    sbmts :: [(Cell, Place)]
+    sbmts = filter (isSubmit . snd) $ Hash.toList g
+
+    done :: Maybe Update
+    done = find f wrs
+      where
+        f (Write cs) = all (\(c, _) -> c `elem` map fst sbmts) cs
+        f _          = False
+    
+    warps :: [Update]
+    warps = filter isWarp upds
+      where
+        isWarp (TimeWarp _ _) = True
+        isWarp _              = False
 
 drawGame :: (Int, Int) -> Grid -> IO ()
 drawGame (w, h) g = putStrLn $ showGame' (w, h) (0, g)
