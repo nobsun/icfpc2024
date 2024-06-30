@@ -1,6 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CustomParser where
+module CustomParser
+  ( parseExpr_
+  , parseExpr
+  ---
+  , parse, expr
+  , bool, int, str
+  , var, lam
+  )where
 
 import Control.Applicative
 import Data.ByteString.Char8 (ByteString)
@@ -9,7 +16,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 -- import Data.Void
 
-import ParserLib as Lib
+import ParserLib hiding (parse)
 import Expr
 
 {- $setup
@@ -138,5 +145,8 @@ expr = asum
 parse :: WParser ByteString a -> ByteString -> Either String (a, [ByteString])
 parse p = runParser p . BS.words
 
-parseExpr :: BS.ByteString -> Either String Expr
-parseExpr = evalParser (expr <* eof) . BS.words
+parseExpr_ :: ByteString -> Either String Expr
+parseExpr_ = evalParser (expr <* eof) . BS.words
+
+parseExpr :: String -> BS.ByteString -> Either String Expr
+parseExpr _dummy = parseExpr_

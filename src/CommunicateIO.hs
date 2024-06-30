@@ -7,7 +7,7 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 import System.Process (readProcess)
 
 import Imports hiding (get)
-import CustomParser (parseExpr)
+import CustomParser (parseExpr_)
 import Expr
 import Pretty (pprInfix)
 
@@ -15,7 +15,7 @@ communicateFile :: FilePath -> IO String
 communicateFile = (communicate_ =<<) . L8.readFile
 
 communicate :: L8.ByteString -> IO Expr
-communicate req = either fail pure . parseExpr . B8.pack =<< communicate_ req
+communicate req = either fail pure . parseExpr_ . B8.pack =<< communicate_ req
 
 communicate_ :: L8.ByteString -> IO String
 communicate_ bs = readProcess "./api/comm.sh" [] (L8.unpack bs)
