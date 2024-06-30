@@ -70,53 +70,52 @@ sources Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように�
 sources _        _     = [] -- S, Var, Void
 
 
-getSourceCells :: Grid -> (Cell, Place) -> [(Cell, Maybe Place)]
+getSourceCells :: Grid -> (Cell, Place) -> [(Cell, Place)]
 getSourceCells g (p, Operator o)
-  = [ (c, t) | c <- sources o p, let t = Hash.lookup c g]
+  = mapMaybe sequenceA [ (c, t) | c <- sources o p, let t = Hash.lookup c g]
 getSourceCells _ _ = []
 
 
 -- 各オペレータの書き込み対象セル
-targets :: Op3D -> Cell -> [(Cell, Place)] -> [(Cell, Place)]
-targets (Move L) (x, y) [(_, n)] = [(t, n)]  -- <
+targets :: Place -> Cell -> [(Cell, Place)] -> [(Cell, Place)]
+targets (Operator (Move L)) (x, y) [(_, n)] = [(t, n)]  -- <
   where t = (x-1, y)
-targets (Move R) (x, y) [(_, n)] = [(t, n)]  -- >
+targets (Operator (Move R)) (x, y) [(_, n)] = [(t, n)]  -- >
   where t = (x+1, y)
-targets (Move U) (x, y) [(_, n)] = [(t, n)]  -- ^
+targets (Operator (Move U)) (x, y) [(_, n)] = [(t, n)]  -- ^
   where t = (x, y-1)
-targets (Move D) (x, y) [(_, n)] = [(t, n)]  -- v
+targets (Operator (Move D)) (x, y) [(_, n)] = [(t, n)]  -- v
   where t = (x, y+1)
-targets (Calc op) (x, y) [(_, Number a), (_, Number b)]
+targets (Operator (Calc op)) (x, y) [(_, Number a), (_, Number b)]
   = [(ret1, v),(ret2, v)]  -- +, -, *, /, %
   where ret1 = (x+1, y)
         ret2 = (x, y+1)
         v = Number $ calc op a b
-targets (Judge op) (x, y) [(_, Number a), (_, Number b)]
+targets (Operator (Judge op)) (x, y) [(_, Number a), (_, Number b)]
   = mapMaybe sequenceA [(ret1, v),(ret2, v)]  -- =, #
   where ret1 = (x+1, y)
         ret2 = (x, y+1)
         v = if judge op a b then Just (Number a) else Nothing
-targets Warp (x, y) [(_, v), (_, Number dx), (_, Number dy), dt] = [(d, v)] -- @
+targets (Operator Warp) (x, y) [(_, v), (_, Number dx), (_, Number dy), dt]
+  = [(d, v)] -- @
   where d = (x - dx, y - dy)
 
+data Updatable = Del (Cell, Place)
+               | Upd (Cell, Place)
+               deriving (Show, Eq)
 
--- | 適用可能状態にあるオペレータとその引数情報
---   キー: 適用可能オペレータ
---   値: 引数情報
-getApplyableOps :: Grid -> Hash.HashMap (Cell, Place) [(Cell, Place)]
-getApplyableOps g = foldr phi Hash.empty ops
+updatables :: Grid -> [Updatable]
+updatables g = foldr phi [] ops
   where
-    phi :: (Cell, Place) ->
-           Hash.HashMap (Cell, Place) [(Cell, Place)] ->
-           Hash.HashMap (Cell, Place) [(Cell, Place)]
-    phi cell@(c, Operator op) h = case op of
-      Move  _ -> Hash.insert cell ss h
-      Calc  _ -> undefined
-      Judge _ -> undefined
-      Warp    -> undefined
+    phi :: (Cell, Place) -> [Updatable] -> [Updatable]
+    phi cell@(c, p@(Operator _)) acc = xs ++ acc
       where
+        xs :: [Updatable]
+        xs = (Del <$> ss) <> (Upd <$> ts)
         ss :: [(Cell, Place)]
-        ss = mapMaybe sequenceA $ getSourceCells g cell
+        ss = getSourceCells g cell
+        ts :: [(Cell, Place)]
+        ts = targets p c ss
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
 
