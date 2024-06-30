@@ -135,9 +135,9 @@ initBy vals g = g'
 step :: Space -> (Maybe Int, Space)
 step [] = (Nothing, [])
 step hist@(g:gs)
-  | isJust done = (retVal, g':hist)
-  | not (null warps) = undefined
-  | otherwise = (Nothing, g':hist)
+  | isJust done      = (retVal, g':hist)
+  | not (null warps) = (Nothing, timewarp:hist)
+  | otherwise        = (Nothing, g':hist)
   where
     g' = foldr phi g upds
       where
@@ -179,6 +179,9 @@ step hist@(g:gs)
       where
         isWarp (TimeWarp _ _) = True
         isWarp _              = False
+
+    timewarp = let TimeWarp t (c, p) = head warps
+               in Hash.insert c p $ gs !! t
 
 drawGame :: (Int, Int) -> Grid -> IO ()
 drawGame (w, h) g = putStrLn $ showGame' (w, h) (0, g)
