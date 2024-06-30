@@ -2,12 +2,14 @@
 module CStore where
 
 import Control.Concurrent
+import qualified Data.ByteString.Char8 as B8
 import System.Directory
 import System.FilePath
 
 import Imports
+import Expr (Expr)
 import qualified CommunicateIO as Comm
-
+import qualified CustomParser as Parser
 
 problemsDir :: FilePath
 problemsDir = "problems"
@@ -99,6 +101,27 @@ delayedStoreLangList overwrite pns =
         () | not alreadyExist  -> write
            | overwrite         -> putStrLn ("already exists, but proceeding with overwrite mode: " ++ pname) *> write
            | otherwise         -> putStrLn ("already exists, skipping: " ++ path)
+
+---
+
+storeLangExpr :: String -> IO ()
+storeLangExpr pname = do
+  let lpath = problemsDir </> pname <.> etypeName ELang
+  let epath = problemsDir </> pname <.> etypeName EExpr
+  putStrLn $ "loading " ++ lpath ++ " ..."
+  eexpr <- Parser.parseExpr_ <$> B8.readFile lpath
+  let write expr = do
+        putStrLn $ "writing " ++ epath ++ " ..."
+        writeFile epath (show expr <> "\n")
+        putStrLn "done."
+      skip e = putStrLn $ "parse error: " ++ e ++ ": skipping"
+  either skip write eexpr
+
+loadLangExpr :: String -> IO Expr
+loadLangExpr pname = do
+  let epath = problemsDir </> pname <.> etypeName EExpr
+  putStrLn $ "loading " ++ epath ++ " ..."
+  readIO =<< readFile epath
 
 ---
 
