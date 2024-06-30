@@ -1,14 +1,12 @@
 module ThreeD where
 
-import Control.Monad
+import Control.Monad (forM_)
 import Data.Char (ord, chr)
-import Data.List
+import Data.List (foldl', foldr, find)
 import qualified Data.Set as Set
 import qualified Data.HashMap.Strict as Hash
-import Data.Hashable
-import Control.Arrow
-import Data.Maybe
-import Data.Void (Void)
+import Data.Hashable (Hashable, hashWithSalt, defaultHashWithSalt)
+import Data.Maybe (fromJust, mapMaybe, isJust)
 
 data Direction = L | R | U | D deriving (Show, Eq)
 data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq)
@@ -26,6 +24,7 @@ calc Sub  (Number x) (Number y) = Number (x-y)
 calc Mul  (Number x) (Number y) = Number (x*y)
 calc Quot (Number x) (Number y) = Number (x `quot` y)
 calc Rem  (Number x) (Number y) = Number (x `rem` y)
+calc op   x          y          = error $ "unexpected arguments: " ++ show op ++ " for " ++ show (x, y)
 
 judge :: Logic -> Place -> Place -> Bool
 judge Eql (Number x) (Number y) = x == y
@@ -120,6 +119,7 @@ operate g ((x, y), Operator Warp) = maybe [] f dr
                 ; return ((x - dx', y - dy'), dt', dv')
                 }
         f (c, t, v) = [TimeWarp t (c, v)]
+operate _ (c, op) = error $ "unexpected operator: " ++ show op ++ " at " ++ show c
 
 initBy :: [(Char, Int)] -> Grid -> Grid
 initBy vals g = g'
@@ -127,9 +127,9 @@ initBy vals g = g'
     g' = foldr phi g vals
       where
         phi :: (Char, Int) -> Grid -> Grid
-        phi (v, n) h = foldr (phi . snd) h cs
+        phi (v, n) h = foldr (f . snd) h cs
           where
-            phi c = Hash.insert c (Number n)
+            f c = Hash.insert c (Number n)
             cs = filter ((==v) . fst) vs
 
         vs = vars g
@@ -146,7 +146,7 @@ step hist@(g:_)
         phi :: Update -> Grid -> Grid
         phi (Erase cs) h = foldr (Hash.delete . fst) h cs
         phi (Write cs) h = foldr (uncurry Hash.insert) h cs
-        phi (TimeWarp t (c, p)) h = h -- NOTE: submit の時には何もしない
+        phi (TimeWarp _ _) h = h -- NOTE: submit の時には何もしない
     
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
@@ -205,9 +205,9 @@ runAndDrawWith' vals g = runAndDrawWith (w+2, h+2) vals g
 
 runAndDrawWith :: (Int, Int) -> [(Char, Int)] -> Grid -> IO ()
 runAndDrawWith wh vals g = do
-  forM_ (zip [1..] gs) $ \(t, g) -> do
+  forM_ (zip [1::Int ..] gs) $ \(t, g') -> do
     putStrLn $ "Step " ++ show t ++ ":"
-    drawGame wh g
+    drawGame wh g'
     putStrLn ""
   putStrLn $ "Result: " ++ show v
   where (v, gs) = runWith vals g
@@ -284,7 +284,7 @@ readProblem prob = do
     readPlace "S" = Just Submit
     readPlace "A" = Just (Var 'A')
     readPlace "B" = Just (Var 'B')
-    readPlace s   = Just (Number (read s :: Int))
+    readPlace s   = Just (Number (read s))
     
 
 {- | Grid Layout
