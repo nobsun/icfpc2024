@@ -20,6 +20,7 @@ main = do
     ; movs <- readFile movs
     ; putStr cls
     ; drawUniv (lines board)
+    ; putStrLn movs
     ; lambdaMan (board, movs)
     }
 
@@ -100,7 +101,7 @@ move (h,w) c (i,j) = case c of
     'L' | 1 < j -> (i, pred j)
     'R' | j < w -> (i, succ j)
     'U' | 1 < i -> (pred i, j)
-    'D' | i < w -> (succ i, j)
+    'D' | i < h -> (succ i, j)
     _           -> (i,j)
 -- -}
 
