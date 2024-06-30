@@ -77,7 +77,7 @@ data Update = Erase [(Cell, Place)]
             | TimeWarp Tick (Cell, Place)
             deriving (Show, Eq)
 
--- 各オペレータの読み取り対象セル
+-- 各オペレータの更新動作アクション
 operate :: Grid -> (Cell, Place) -> [Update]
 operate g ((x, y), Operator (Move L)) = maybe [] f q  -- <
   where q = Hash.lookup (x+1, y) g
@@ -296,18 +296,19 @@ sample = Hash.fromList [ ((0,1), Number 5) -- x
                        , ((1,1), Operator (Calc Sub))
                        ]
 
---   0 1 2 3 4 5 6 7 8
--- 0 . . . . 0 . . . .
--- 1 . B > . = . . . .
--- 2 . v 1 . . > . . .
--- 3 . . - . . . + S .
--- 4 . . . . . ^ . . .
--- 5 . . v . . 0 > . .
--- 6 . . . . . . A + .
--- 7 . 1 @ 6 . . < . .
--- 8 . . 3 . 0 @ 3 . .
--- 9 . . . . . 3 . . .
---
+{- | Grid Layout
+  0 1 2 3 4 5 6 7 8
+0 . . . . 0 . . . .
+1 . B > . = . . . .
+2 . v 1 . . > . . .
+3 . . - . . . + S .
+4 . . . . . ^ . . .
+5 . . v . . 0 > . .
+6 . . . . . . A + .
+7 . 1 @ 6 . . < . .
+8 . . 3 . 0 @ 3 . .
+9 . . . . . 3 . . .
+-}
 game :: Grid
 game = Hash.fromList [ ((4,0), Number 0)
                      , ((1,1), Var 'B')
