@@ -1,32 +1,54 @@
 module ThreeD where
 
 import qualified Data.Set as Set
+import qualified Data.HashMap.Strict as Hash
+import Data.Hashable
 import Control.Arrow
 import Data.Maybe
 import Data.Void (Void)
 
 data Direction = L | R | U | D deriving (Show, Eq)
-data Arith = Add | Sub | Mul | Quot | Rem | Eq | Neq deriving (Show, Eq)
+data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq)
+data Logic = Eql | Neq deriving (Show, Eq)
 
 data Op3D = Move Direction
           | Calc Arith
+          | Judge Logic
           | Warp
-          | Submit
-          | Var Char  -- 'A' and 'B' only
+          -- | Submit -- ??
           deriving (Show, Eq)
 
+calc :: Arith -> Int -> Int -> Int
+calc Add  = (+)
+calc Sub  = (-)
+calc Mul  = (*)
+calc Quot = div
+calc Rem  = rem
+
+judge :: Logic -> Int -> Int -> Bool
+judge Eql = (==)
+judge Neq = (/=)
+
 type Cell = (Int, Int)
-type Grid = [(Cell, Place)] -- assoc list, replace HashMap.Strict for performance?
+type Grid = Hash.HashMap Cell Place
 type Tick = Int
 type Space = [(Tick, Grid)]
 
 data Place = Operator Op3D
            | Number   Int
+           | Var Char  -- 'A' and 'B' only
            deriving (Show, Eq)
+
+instance Hashable Place where
+  hashWithSalt = defaultHashWithSalt
+
 
 isOperator :: Place -> Bool
 isOperator (Operator _) = True
 isOperator _            = False
+
+operators :: Grid -> Hash.HashMap Cell Place
+operators = Hash.filter isOperator
 
 -- 各オペレータの読み取り対象セル
 sources :: Op3D -> Cell -> [Cell]
@@ -34,7 +56,10 @@ sources (Move L) (x,y) = [(x+1, y  )] -- <
 sources (Move R) (x,y) = [(x-1, y  )] -- >
 sources (Move U) (x,y) = [(x,   y+1)] -- ^
 sources (Move D) (x,y) = [(x,   y-1)] -- v
-sources (Calc o) (x,y) = [arg1, arg2] -- +, -, *, /, %, =, #
+sources (Calc o) (x,y) = [arg1, arg2] -- +, -, *, /, %
+  where arg1 = (x-1, y  )
+        arg2 = (x,   y-1)
+sources (Judge o) (x,y) = [arg1, arg2] -- =, #
   where arg1 = (x-1, y  )
         arg2 = (x,   y-1)
 sources Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように先頭に
@@ -44,82 +69,70 @@ sources Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように�
         v  = (x,   y-1)
 sources _        _     = [] -- S, Var, Void
 
+
 getSourceCells :: Grid -> (Cell, Place) -> [(Cell, Maybe Place)]
 getSourceCells g (p, Operator o)
-  = [ (c, t) | c <- sources o p, let t = lookup c g]
+  = [ (c, t) | c <- sources o p, let t = Hash.lookup c g]
 getSourceCells _ _ = []
 
+
 -- 各オペレータの書き込み対象セル
--- ただし、これが呼ばれるときは Warpは書き込み対象セルが渡っている前提です
-targets :: Op3D -> Cell -> Grid -> [Cell]
-targets (Move L) (x,y) g = [(x-1, y  )] -- <
-targets (Move R) (x,y) g = [(x+1, y  )] -- >
-targets (Move U) (x,y) g = [(x,   y-1)] -- ^
-targets (Move D) (x,y) g = [(x,   y+1)] -- v
-targets (Calc o) (x,y) g = [arg1, arg2] -- +, -, *, /, %, =, #
-  where arg1 = (x+1, y  )
-        arg2 = (x,   y+1)
-targets Warp     (x,y) g = [(x - vx, y - vy)] -- @
-  where dx  = (x-1, y  )
-        dy  = (x+1, y  )
-        -- 乱暴だけど大丈夫
-        Number vx = fromJust $ lookup dx g
-        Number vy = fromJust $ lookup dy g
-targets _        _     g = [] -- S, Var, Void
+targets :: Op3D -> Cell -> [(Cell, Place)] -> [(Cell, Place)]
+targets (Move L) (x, y) [(_, n)] = [(t, n)]  -- <
+  where t = (x-1, y)
+targets (Move R) (x, y) [(_, n)] = [(t, n)]  -- >
+  where t = (x+1, y)
+targets (Move U) (x, y) [(_, n)] = [(t, n)]  -- ^
+  where t = (x, y-1)
+targets (Move D) (x, y) [(_, n)] = [(t, n)]  -- v
+  where t = (x, y+1)
+targets (Calc op) (x, y) [(_, Number a), (_, Number b)]
+  = [(ret1, v),(ret2, v)]  -- +, -, *, /, %
+  where ret1 = (x+1, y)
+        ret2 = (x, y+1)
+        v = Number $ calc op a b
+targets (Judge op) (x, y) [(_, Number a), (_, Number b)]
+  = mapMaybe sequenceA [(ret1, v),(ret2, v)]  -- =, #
+  where ret1 = (x+1, y)
+        ret2 = (x, y+1)
+        v = if judge op a b then Just (Number a) else Nothing
+targets Warp (x, y) [(_, v), (_, Number dx), (_, Number dy), dt] = [(d, v)] -- @
+  where d = (x - dx, y - dy)
 
-getTargetCells :: Grid -> (Cell, Place) -> [(Cell, Place)]
-getTargetCells g (p, Operator o)
-  = [ (c, t) | c <- targets o p g, let Just t = lookup c g] -- 乱暴だけど大丈夫
-getTargetCells _ _ = []
 
-conflict :: [Cell] -> [Cell]
-conflict cs = Set.toList $ foldl phi Set.empty cs
+-- | 適用可能状態にあるオペレータとその引数情報
+--   キー: 適用可能オペレータ
+--   値: 引数情報
+getApplyableOps :: Grid -> Hash.HashMap (Cell, Place) [(Cell, Place)]
+getApplyableOps g = foldr phi Hash.empty ops
   where
-    phi :: Set.Set Cell -> Cell -> Set.Set Cell
-    phi s c = if Set.member c s then Set.insert c s else s
-
-step :: Grid -> Grid
-step g | not (null conflicts) = error "conflict occured"
-       | otherwise = writein $ readout g
-  where
-    readout :: Grid -> Grid
-    readout g = undefined
+    phi :: (Cell, Place) ->
+           Hash.HashMap (Cell, Place) [(Cell, Place)] ->
+           Hash.HashMap (Cell, Place) [(Cell, Place)]
+    phi cell@(c, Operator op) h = case op of
+      Move  _ -> Hash.insert cell ss h
+      Calc  _ -> undefined
+      Judge _ -> undefined
+      Warp    -> undefined
       where
-        ro :: [Cell]
-        ro = concatMap f ss'
-          where f ((_, Operator (Move _)), xs ) = map fst xs
-                f ((_, Operator (Calc _)), xs ) = map fst xs
-                f ((_, Operator Warp    ), v:_) = [fst v]
-                f _                             = []
-    
-    writein :: Grid -> Grid
-    writein g = undefined
-    
+        ss :: [(Cell, Place)]
+        ss = mapMaybe sequenceA $ getSourceCells g cell
     ops :: [(Cell, Place)]
-    ops = filter (isOperator . snd) g
-    ss :: [((Cell, Place), [(Cell, Maybe Place)])]
-    ss = map (id &&& getSourceCells g) ops
-    ss' :: [((Cell, Place), [(Cell, Place)])]
-    ss' = map (second (mapMaybe sequenceA)) ss
-    ts :: [((Cell, Place), [(Cell, Place)])]
-    ts = map (id &&& getTargetCells g) ops
-    conflicts :: [(Cell, Place)]
-    conflicts = concatMap snd ts
+    ops = Hash.toList $ operators g
 
+-- | TODO: conflict の検出はまだ。Submit があるのでちょっとややこしい
+step :: Grid -> Grid
+step g = undefined
+
+               
 {- | Grid Layout
   0 1 2
 0 . y .
 1 x - .
 2 . . .
 -}
-test1 :: Bool
-test1 = step s == e
-  where
-    s = [ ((0,1), Number 5) -- x
-        , ((1,0), Number 3) -- y
-        , ((1,1), Operator (Calc Sub))
-        ]
-    e = [ ((1,2), Number 2) -- x-y
-        , ((2,1), Number 2) -- x-y
-        , ((1,1), Operator (Calc Sub))
-        ]
+sample :: Grid
+sample = Hash.fromList [ ((0,1), Number 5) -- x
+                       , ((1,0), Number 3) -- y
+                       , ((1,1), Operator (Calc Sub))
+                       ]

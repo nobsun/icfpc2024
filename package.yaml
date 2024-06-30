@@ -69,6 +69,7 @@ library:
   - http-client-tls
   - megaparsec
   - unordered-containers
+  - hashable
   # - extra
   # - multiset
   # - recursion-schemes
