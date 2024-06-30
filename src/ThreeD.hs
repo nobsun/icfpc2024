@@ -90,15 +90,13 @@ operate g ((x, y), Operator (Move U)) = maybe [] f q  -- ^
 operate g ((x, y), Operator (Move D)) = maybe [] f q  -- v
   where q = Hash.lookup (x, y-1) g
         f r = [ Erase [((x, y-1), r)], Write [((x, y+1), r)]]
-operate g ((x, y), Operator (Calc op))
-  = maybe [] f r
+operate g ((x, y), Operator (Calc op)) = maybe [] f r -- +, -, *, /, %
   where p = Hash.lookup (x-1, y) g
         q = Hash.lookup (x, y-1) g
         r = do { p' <- p; q' <- q; return (p', q', calc op p' q') }
         f (a, b, c) = [ Erase [((x-1, y), a), ((x, y-1), b)]
               , Write [((x+1, y), c), ((x, y+1), c)]]
-operate g ((x, y), Operator (Judge op))
-  = maybe [] f r
+operate g ((x, y), Operator (Judge op)) = maybe [] f r -- =, #
   where p = Hash.lookup (x-1, y) g
         q = Hash.lookup (x, y-1) g
         r = do { p' <- p; q' <- q; return (judge op p' q', p', q') }
@@ -106,7 +104,7 @@ operate g ((x, y), Operator (Judge op))
           | c = [ Erase [((x-1, y), a), ((x, y-1), b)]
                 , Write [((x+1, y), a), ((x, y+1), b)]]
           | otherwise = []
-operate g ((x, y), Operator Warp) = maybe [] f dr
+operate g ((x, y), Operator Warp) = maybe [] f dr -- @
   where dx = Hash.lookup (x-1, y) g
         dy = Hash.lookup (x+1, y) g
         dt = Hash.lookup (x, y+1) g
