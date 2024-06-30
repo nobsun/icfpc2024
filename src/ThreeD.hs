@@ -21,7 +21,7 @@ data Op3D = Move Direction
 
 calc :: Arith -> Place -> Place -> Place
 calc Add  (Number x) (Number y) = Number (x+y)
-calc Sub  (Number x) (Number y) = Number (x-y)
+calc Sub  (Number x) (Number y) = Number (max (x-y) 0)
 calc Mul  (Number x) (Number y) = Number (x*y)
 calc Quot (Number x) (Number y) = Number (x `quot` y)
 calc Rem  (Number x) (Number y) = Number (x `rem` y)
@@ -116,7 +116,7 @@ operate g ((x, y), Operator Warp) = maybe [] f dr
                 ; Number dy' <- dy
                 ; Number dt' <- dt
                 ; dv' <- dv
-                ; return ((dx', dy'), dt', dv')
+                ; return ((x - dx', y - dy'), dt', dv')
                 }
         f (c, t, v) = [TimeWarp t (c, v)]
 
@@ -144,7 +144,7 @@ step hist@(g:gs)
         phi :: Update -> Grid -> Grid
         phi (Erase cs) h = foldr (Hash.delete . fst) h cs
         phi (Write cs) h = foldr (uncurry Hash.insert) h cs
-        phi (TimeWarp t (c, p)) _ = Hash.insert c p $ gs !! t
+        phi (TimeWarp t (c, p)) _ = Hash.insert c p $ gs !! (t-1)
         phi Done h = h
     
     ops :: [(Cell, Place)]
@@ -180,42 +180,57 @@ step hist@(g:gs)
         isWarp (TimeWarp _ _) = True
         isWarp _              = False
 
-    timewarp = let TimeWarp t (c, p) = head warps
-               in Hash.insert c p $ gs !! t
+    -- Timewarp がある場合は全て同じ Tick に戻るはず
+    timewarp = foldr (\(TimeWarp _ (c, p)) h -> Hash.insert c p h) (hist !! t) warps
+      where
+        TimeWarp t _ = head warps
+
+runAndDrawWith :: (Int, Int) -> [(Char, Int)] -> Grid -> IO ()
+runAndDrawWith wh vals g = undefined
+
+runWith :: [(Char, Int)] -> Grid -> (Int, Space)
+runWith vals g = run $ initBy vals g
+
+run :: Grid -> (Int, Space)
+run g = go [g]
+  where
+    go :: Space -> (Int, Space)
+    go gs = case step gs of
+      (Nothing, gs') -> go gs'
+      (Just v,  gs') -> (v, gs')
 
 drawGame :: (Int, Int) -> Grid -> IO ()
-drawGame (w, h) g = putStrLn $ showGame' (w, h) (0, g)
-
-showGame' :: (Int, Int) -> (Tick, Grid) -> String
-showGame' wh@(w, h) (t, g)
-  = unlines [showTick t, showGame wh g]
-  where
-    showTick t = "Tick: " <> show t
+drawGame (w, h) g = putStrLn $ showGame (w, h) g
 
 showGame :: (Int, Int) -> Grid -> String
-showGame (w, h) g = unlines $ map (intersperse ' ') $ grid
+showGame (w, h) g = unlines $ map (concat . map pad) grid
   where
-    grid = [[toChar c
+    pad s = case length s of
+      1 -> ' ' : s
+      2 -> s
+      _ -> "??"
+    
+    grid = [[toStr c
             | x <- [0..w-1]
             , let c = Hash.lookup (x, y) g]
            | y <- [0..h-1]]
-    toChar :: Maybe Place -> Char
-    toChar Nothing = '.'
-    toChar (Just (Number n)) = chr $ ord '0' + n
-    toChar (Just (Operator (Move L)))    = '<'
-    toChar (Just (Operator (Move R)))    = '>'
-    toChar (Just (Operator (Move U)))    = '^'
-    toChar (Just (Operator (Move D)))    = 'v'
-    toChar (Just (Operator (Calc Add)))  = '+'
-    toChar (Just (Operator (Calc Sub)))  = '-'
-    toChar (Just (Operator (Calc Mul)))  = '*'
-    toChar (Just (Operator (Calc Quot))) = '/'
-    toChar (Just (Operator (Calc Rem)))  = '%'
-    toChar (Just (Operator (Judge Eql))) = '='
-    toChar (Just (Operator (Judge Neq))) = '#'
-    toChar (Just (Operator Warp))        = '@'
-    toChar (Just Submit)                 = 'S'
-    toChar (Just (Var v))                = v
+    toStr :: Maybe Place -> String
+    toStr Nothing                       = "."
+    toStr (Just (Number n))             = show n
+    toStr (Just (Operator (Move L)))    = "<"
+    toStr (Just (Operator (Move R)))    = ">"
+    toStr (Just (Operator (Move U)))    = "^"
+    toStr (Just (Operator (Move D)))    = "v"
+    toStr (Just (Operator (Calc Add)))  = "+"
+    toStr (Just (Operator (Calc Sub)))  = "-"
+    toStr (Just (Operator (Calc Mul)))  = "*"
+    toStr (Just (Operator (Calc Quot))) = "/"
+    toStr (Just (Operator (Calc Rem)))  = "%"
+    toStr (Just (Operator (Judge Eql))) = "="
+    toStr (Just (Operator (Judge Neq))) = "#"
+    toStr (Just (Operator Warp))        = "@"
+    toStr (Just Submit)                 = "S"
+    toStr (Just (Var v))                = [v]
 
     
 
