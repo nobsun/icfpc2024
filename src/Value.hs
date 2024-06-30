@@ -115,6 +115,7 @@ exprToHaskellExpr = ($ "") . f
     f (EBinary op e1 e2) = showParen True $ showString ("v" ++ show op ++ " ") . f e1 . showString " " . f e2
     f (EIf e1 e2 e3) = showParen True $ showString "vIf " . f e1 . showString " " . f e2 . showString " " . f e3
     f (ELambda x e) = showParen True $ showString "VFun " . (showParen True $ showString ("\\x"  ++ show x) . showString " -> " . f e)
+    f e@(ELambdaVars {}) = f (unELambdaVars e)
     f (EVar x) = showString ("x" ++ show x)
 
 eval :: Expr -> Value
@@ -151,4 +152,7 @@ eval = f IntMap.empty
                 ApplyEager  -> vApplyEager
     f env (EIf e1 e2 e3) = vIf (f env e1) (f env e2) (f env e3)
     f env (ELambda n e) = VFun (\x -> f (IntMap.insert n x env) e)
+    f env (ELambdaVars [] e) = f env e  {- not reach -}
+    f env (ELambdaVars [n] e) = VFun (\x -> f (IntMap.insert n x env) e)
+    f env (ELambdaVars (n:ns) e) = VFun (\x -> f (IntMap.insert n x env) (ELambdaVars ns e))
     f env (EVar n) = env IntMap.! n
