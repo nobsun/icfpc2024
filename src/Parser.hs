@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Parser
-  ( IcfpParseError
+  ( ICFPError
   , parseExpr
   ) where
 
@@ -139,8 +139,8 @@ expr = asum
   , EVar <$> var
   ]
 
+{- parse-error type for ICFP language  -}
+type ICFPError = ParseErrorBundle [ByteString] Void
 
-type IcfpParseError = ParseErrorBundle [ByteString] Void
-
-parseExpr :: String -> BS.ByteString -> Either IcfpParseError Expr
+parseExpr :: String -> BS.ByteString -> Either ICFPError Expr
 parseExpr fs = parse expr fs . BS.words

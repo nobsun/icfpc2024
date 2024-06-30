@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module CustomParser
-  ( parseExpr_
+  ( ICFPError
+  , parseExpr_
   , parseExpr
   ---
   , parse, expr
@@ -142,11 +143,14 @@ expr = asum
 
 ---
 
-parse :: WParser ByteString a -> ByteString -> Either String (a, [ByteString])
+{- parse-error type for ICFP language  -}
+type ICFPError = String
+
+parse :: WParser ByteString a -> ByteString -> Either ICFPError (a, [ByteString])
 parse p = runParser p . BS.words
 
-parseExpr_ :: ByteString -> Either String Expr
+parseExpr_ :: ByteString -> Either ICFPError Expr
 parseExpr_ = evalParser (expr <* eof) . BS.words
 
-parseExpr :: String -> BS.ByteString -> Either String Expr
+parseExpr :: String -> BS.ByteString -> Either ICFPError Expr
 parseExpr _dummy = parseExpr_
