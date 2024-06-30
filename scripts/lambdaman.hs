@@ -13,9 +13,9 @@ import System.IO
 
 main :: IO ()
 main = do
-    { num:_ <- getArgs
+    { num:sol:_ <- getArgs
     ; let board = "answers/lambdaman" ++ num
-    ; let movs  = "solutions/lambdaman" ++ num ++"/sol.txt"
+    ; let movs  = "solutions/lambdaman" ++ num ++ "/" ++ sol
     ; board <- readFile board
     ; movs <- readFile movs
     ; putStr cls
