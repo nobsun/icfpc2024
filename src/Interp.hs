@@ -108,6 +108,11 @@ interp rho = \ case
         $ VFun (\ a -> interp (M.insert v a rho) e)
     ELambdaVars (v:vs) e  -> pure
         $ VFun (\ a -> interp (M.insert v a rho) (ELambdaVars vs e))
+    ELet [] e             -> interp rho e  {- not reach -}
+    ELet [B ap v e1] e2     ->
+        interp rho (EBinary ap (ELambda v e2) e1)
+    ELet (B ap v e1:bs) e2  ->
+        interp rho (EBinary ap (ELambda v (ELet bs e2)) e1)
 
 exUOp :: (ICFPC a) => UOp -> Value a -> State Int (Value a)
 exUOp uop val = case uop of
