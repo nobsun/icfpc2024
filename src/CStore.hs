@@ -103,6 +103,24 @@ allList =
 
 ---
 
+writeExpr :: String -> Expr -> IO ()
+writeExpr path expr = do
+  case expr of
+    (EStr s)  -> do
+      putStrLn $ "writing top-level EStr string " ++ path ++ " ..."
+      B8.writeFile path s
+    _         -> do
+      putStrLn $ "writing " ++ path ++ " ..."
+      writeFile path (show expr <> "\n")
+  putStrLn "done."
+
+exprString :: Expr -> String
+exprString expr = case expr of
+  (EStr s)  ->  B8.unpack s
+  _         ->  show expr
+
+---
+
 storeLangFile :: String -> FilePath -> IO ()
 storeLangFile pname path = do
   putStrLn $ "geting " ++ pname ++ " ..."
@@ -135,15 +153,8 @@ storeLangExpr pname = do
   let epath = problemsDir </> pname <.> etypeName EExpr
   putStrLn $ "loading " ++ lpath ++ " ..."
   eexpr <- Parser.parseExpr_ <$> B8.readFile lpath
-  let write (EStr s) = do
-        putStrLn $ "writing top-level EStr string " ++ epath ++ " ..."
-        B8.writeFile epath s
-      write expr = do
-        putStrLn $ "writing " ++ epath ++ " ..."
-        writeFile epath (show expr <> "\n")
-        putStrLn "done."
-      skip e = putStrLn $ "parse error: " ++ e ++ ": skipping"
-  either skip write eexpr
+  let skip e = putStrLn $ "parse error: " ++ e ++ ": skipping"
+  either skip (writeExpr epath) eexpr
 
 loadLangExpr :: String -> IO Expr
 loadLangExpr pname = do
@@ -166,6 +177,15 @@ storePPR pname = do
       let path = prettyDir </> pname <.> etypeName etype
       putStrLn $ "writing " ++ path ++ " ..."
       writeFile' path (ppr expr)
+
+storeSolve :: String -> String -> String -> IO ()
+storeSolve pname solution solName = do
+  rexpr <- Comm.solve pname solution
+  let spath = solName <.> "txt"
+      rpath = solName <> "_" <> "result" <.> "txt"
+  writeFile spath (solution <> "\n")
+  writeExpr rpath rexpr
+  putStr $ exprString rexpr
 
 ---
 
