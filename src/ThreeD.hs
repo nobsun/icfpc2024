@@ -44,6 +44,9 @@ data Place = Operator Op3D
 instance Hashable Place where
   hashWithSalt = defaultHashWithSalt
 
+isWarp :: Place -> Bool
+isWarp (Operator Warp) = True
+isWarp _               = False
 
 isOperator :: Place -> Bool
 isOperator (Operator _) = True
@@ -132,13 +135,15 @@ targets (Operator (Judge op)) (x, y) [(_, Number a), (_, Number b)]
         ret2 = (x, y+1)
         v = if judge op a b then Just (Number a) else Nothing
 targets (Operator Warp) (x, y) [(_, v), (_, Number dx), (_, Number dy), dt]
-  = [(d, v)] -- @
+  -- NOTE: dt は特殊で移動先相対 Tick
+  = [(d, v), dt] -- @
   where d = (x - dx, y - dy)
 targets _ _ _ = [] -- S, Var, Void
 
 
 data Updatable = Del (Cell, Place)
                | Upd (Cell, Place)
+               | Wrp (Cell, Place)
                | Ban (Cell, Place)
                deriving (Show, Eq)
 
@@ -150,22 +155,36 @@ updatables bombs g = foldr phi [] ops
       where
         xs :: [Updatable]
         xs = (Del <$> ss) <> (Upd <$> ts) <> (Ban <$> bs)
-        ss :: [(Cell, Place)]
+        ss, bs, ts, wrps :: [(Cell, Place)]
         ss = getSourceCells g cell
         (bs, ts) = partition (\(x,_) -> Set.member x bombs) $ targets p c ss
+        wrps = filter (\(_, p) -> isWarp p) ts
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
 
 -- | TODO: conflict の検出はまだ。Submit があるのでちょっとややこしい
 step :: Set.Set Cell -> Grid -> (Maybe Place, Grid)
-step bombs g = foldr phi (Nothing, g) upd
+step bombs g | isJust warp = undefined
+             | otherwise = foldr phi (Nothing, g) upd
   where
     phi :: Updatable -> (Maybe Place, Grid) -> (Maybe Place, Grid)
     phi (Del (c, _)) (b, g') = (b, Hash.delete c g')
     phi (Upd (c, p)) (b, g') = (b, Hash.insert c p g')
     phi (Ban (c, p)) (b, g') = (Just p, Hash.insert c p g')
-    
+
     upd = updatables bombs g
+    warp = find isWarp upd
+    
+    isWarp (Wrp _) = True
+    isWarp _ = False
+
+foo g = takeWhile isDone $ iterate f (Nothing, g)
+  where
+    isDone = isJust . fst
+    f (_, g) = let (ok, g') = step bombs g
+               in (ok, g')
+    
+    bombs = submits g
 
 
 run :: Grid -> Space
