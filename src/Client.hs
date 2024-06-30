@@ -101,6 +101,20 @@ submitSolution name solution = do
         Value.VInt n  -> print n
         Value.VFun _  -> BS.putStrLn "<function>"
 
+submitSolutionBis :: String -> String -> IO ()
+submitSolutionBis name solution = do
+  ret <- postString ("solve " ++ name ++ " " ++ solution)
+  case ret of
+    Left err -> throwIO $ userError $ show err
+    Right expr -> do
+      case Value.eval expr of
+        Value.VStr s  -> output name $ BS.unpack s
+        Value.VBool b -> output name $ show b
+        Value.VInt n  -> output name $ show n
+        Value.VFun _  -> output name "<function>"
+  where
+    output n = writeFile ("solutions/" ++ n ++ "/solv_resolv.txt")
+
 -- Usage
 --
 -- > submitExpr "lambdaman1" (EStr "LLLDURRRUDRRURR")
