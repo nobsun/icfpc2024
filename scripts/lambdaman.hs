@@ -60,7 +60,8 @@ initGame (b,ms) cs = case lines b of
                     , dimension = (h,w)
                     , moves     = ms
                     , position  = (i', j')
-                    , output    = goto (i',j') ++ "L"
+                    , output    = goto (i',j')
+                               ++ "L" ++ goto (succ h,1)
                     }
                     where (i',j') = (succ i, succ j)
 
@@ -85,7 +86,11 @@ step g = case controls g of
                     { controls = cs
                     , moves    = ms
                     , position = (i',j')
-                    , output   = goto (i,j) ++ " " ++ goto (i',j') ++ "L"
+                    , output   = goto (i,j)
+                              ++ " "
+                              ++ goto (i',j')
+                              ++ "L"
+                              ++ goto (succ h,1)
                     }
                     where
                         (i',j') = move (h,w) m (i,j)
