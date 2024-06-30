@@ -91,6 +91,8 @@ pprBOp (pprFix, _) b = case b of
   Take    ->  opPrefix "take"
   Drop    ->  opPrefix "drop"
   Apply   ->  apply
+  ApplyLazy   ->  apply
+  ApplyEager  ->  \x y -> x <+> "$!" <+> y
   where
     opInfix  op = case pprFix of
       PInfix   -> ppInfix op
