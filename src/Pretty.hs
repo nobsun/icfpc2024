@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Pretty where
@@ -34,21 +35,41 @@ unwordspp (w:ws)  = foldl' (<+>) w ws
 
 -----
 
+pprHaskell :: Expr -> String
+pprHaskell = ppsNewline . pprExpr (Cxt PInfix Haskell 0)
+
 pprInfix :: Expr -> String
-pprInfix = ppsString . pprExpr (PInfix, 0)
+pprInfix = ppsNewline . pprExpr (Cxt PInfix LangICFP 0)
 
 pprPrefix :: Expr -> String
-pprPrefix = ppsString . pprExpr (PInfix, 0)
+pprPrefix = ppsNewline . pprExpr (Cxt PPrefix LangICFP 0)
 
-data PprFix
+ppsNewline :: PPString -> String
+ppsNewline = ppsString . (<> "\n")
+
+data PPFix
   = PInfix
   | PPrefix
 
-type Cxt = (PprFix, Int)
+data PPOutput
+  = Haskell
+  | LangICFP
+
+data Cxt =
+  Cxt
+  { ppFix :: PPFix
+  , ppOutput :: PPOutput
+  , ppIfIndent :: Int
+  }
+
+selectOp :: PPOutput -> p -> p -> p
+selectOp ppout op hop = case ppout of
+  LangICFP  -> op
+  Haskell   -> hop
 
 pprExpr :: Cxt -> Expr -> PPString
-pprExpr cx e0 = case e0 of
-  EBool b            -> pprBool b
+pprExpr cx e0 = case toELambdaVars e0 of
+  EBool b            -> pprBool (ppOutput cx) b
   EInt i             -> pprNat i
   EStr s             -> pprStr s
   EUnary op e        -> pprUnary cx op e
@@ -58,9 +79,9 @@ pprExpr cx e0 = case e0 of
   ELambdaVars vs e   -> pprLambdaVars cx vs e
   EVar v             -> pprVar v
 
-pprBool :: Bool -> PPString
-pprBool True  = "true"
-pprBool False = "false"
+pprBool :: PPOutput -> Bool -> PPString
+pprBool ppout True   = selectOp ppout  "true"  "True"
+pprBool ppout False  = selectOp ppout  "false" "False"
 
 pprNat :: Integer -> PPString
 pprNat = showpp
@@ -69,63 +90,72 @@ pprStr :: ByteString -> PPString
 pprStr = dquote . pps . B8.unpack
 
 pprUnary :: Cxt -> UOp -> Expr -> PPString
-pprUnary pf u e = pprUOp u <+> parenExpr pf e
+pprUnary cx u e = pprUOp (ppOutput cx) u <+> parenExpr cx e
 
-pprUOp :: UOp -> PPString
-pprUOp u = case u of
-  Neg       -> "-"
-  Not       -> "!"
-  StrToInt  -> "str-to-int"
-  IntToStr  -> "int-to-str"
+pprUOp :: PPOutput -> UOp -> PPString
+pprUOp ppout u = case u of
+  Neg       -> selOp  "-"  "-"
+  Not       -> selOp  "!"  "not"
+  StrToInt  -> selOp  "str-to-int"  "strToInt"
+  IntToStr  -> selOp  "int-to-str"  "intToStr"
+  where selOp = selectOp ppout
 
 pprBinary :: Cxt -> BinOp -> Expr -> Expr -> PPString
 pprBinary pf op e1 e2 = pprBOp pf op (parenExpr pf e1) (parenExpr pf e2)
 
 pprBOp :: Cxt -> BinOp -> PPString -> PPString -> PPString
-pprBOp (pprFix, _) b = case b of
-  Add     ->  opInfix "+"
-  Sub     ->  opInfix "-"
-  Mult    ->  opInfix "*"
-  -- Quot    ->  opInfix "/"
-  Div     ->  opInfix "/"
+pprBOp Cxt{ppFix,ppOutput} b = case b of
+  Add     ->  opInfix  "+"  "+"
+  Sub     ->  opInfix  "-"  "-"
+  Mult    ->  opInfix  "*"  "*"
+  -- Quot    ->  opInfix  "/"
+  Div     ->  opInfix  "/"  "`rem`"
   -- Rem     ->  "%"
-  Mod     ->  opInfix "%"
-  Lt      ->  opInfix "<"
-  Gt      ->  opInfix ">"
-  Eql     ->  opInfix "="
-  Or      ->  opInfix "|"
-  And     ->  opInfix "&"
-  Concat  ->  opInfix "."
-  Take    ->  opPrefix "take"
-  Drop    ->  opPrefix "drop"
+  Mod     ->  opInfix  "%"  "`quot`"
+  Lt      ->  opInfix  "<"  "<"
+  Gt      ->  opInfix  ">"  ">"
+  Eql     ->  opInfix  "="  "=="
+  Or      ->  opInfix  "|"  "||"
+  And     ->  opInfix  "&"  "&&"
+  Concat  ->  opInfix  "."  "<>"
+  Take    ->  opPrefix "take" "take"
+  Drop    ->  opPrefix "drop" "drop"
   Apply   ->  apply
   ApplyLazy   ->  apply
   ApplyEager  ->  \x y -> x <+> "$!" <+> y
   where
-    opInfix  op = case pprFix of
-      PInfix   -> ppInfix op
-      PPrefix  -> ppPrefix op
-    opPrefix op = ppPrefix op
-    apply x y = x <+> y
+    opInfix  op hop = case ppFix of
+      PInfix   -> ppInfix (selOp op hop)
+      PPrefix  -> ppPrefix (selOp op $ hPrefix hop)
+    opPrefix op hop = ppPrefix (selOp op hop)
+    selOp = selectOp ppOutput
+    hPrefix op
+      | backquoted  = fromString $ reverse opr
+      | otherwise   = op
+      where backquoted = hd1 == "`" && tl1 == "`"
+            (hd1, opx) = splitAt 1 (ppsString op)
+            (tl1, opr) = splitAt 1 (reverse opx)
 
     ppInfix   op x y = x <+> op <+> y
     ppPrefix  op x y = op <+> x <+> y
 
+    apply x y = x <+> y
+
 pprIf :: Cxt -> Expr -> Expr -> Expr -> PPString
 -- pprIf pf e1 e2 e3 = "if" <+> parenExpr pf e1 <+> parenExpr pf e2 <+> parenExpr pf e3
-pprIf (pf, ilv) e1 e2 e3 =
+pprIf cx@Cxt{ppIfIndent} e1 e2 e3 =
   "\n" <> indent <> "if" <+> pprExpr cx' e1     <>
   "\n" <> indent <> "then" <+>  pprExpr cx' e2  <>
   "\n" <> indent <> "else" <+>  pprExpr cx' e3  <>
   "\n"
-  where cx' = (pf, succ ilv)
-        indent = pps $ replicate ilv ' '
+  where cx' = cx{ppIfIndent = succ ppIfIndent}
+        indent = pps $ replicate ppIfIndent ' '
 
 pprLambda :: Cxt -> Var -> Expr -> PPString
-pprLambda pf v e = pprLambdaVars pf [v] e
+pprLambda cx v e = pprLambdaVars cx [v] e
 
 pprLambdaVars :: Cxt -> [Var] -> Expr -> PPString
-pprLambdaVars pf vs e = "λ" <+> unwordspp (map pprVar vs) <+> "->" <+> pprExpr pf e
+pprLambdaVars cx vs e = selectOp (ppOutput cx) "λ" "\\" <+> unwordspp (map pprVar vs) <+> "->" <+> pprExpr cx e
 
 pprVar :: Var -> PPString
 pprVar v = "v" <> showpp v

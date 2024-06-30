@@ -9,6 +9,7 @@ module Expr
   , BinOp (..)
   , Token
   , unELambdaVars
+  , toELambdaVars
   , toExpr2
   , fromExpr2
   , encode
@@ -67,6 +68,35 @@ unELambdaVars   (ELambdaVars [x] e)     = ELambda x (unELambdaVars e)
 unELambdaVars   (ELambdaVars (x:xs) e)  = ELambda x (unELambdaVars $ ELambdaVars xs e)
 unELambdaVars e@(EVar {})               = e
 
+-----
+
+{- |
+-- >>> e3 = ELambda 1 (ELambda 2 (ELambda 3 (EInt 1))) :: Expr
+-- >>> toELambdaVars e3
+-- ELambdaVars [1,2,3] (EInt 1)
+-- >>> toELambdaVars (EBinary Apply (EBinary Apply e3 4) 5)
+-- EBinary Apply (EBinary Apply ELambdaVars [1,2,3] (EInt 1))
+ -}
+toELambdaVars :: Expr' a -> Expr' a
+toELambdaVars = f
+  where
+    f e@(EBool {})                           =  e
+    f e@(EInt  {})                           =  e
+    f e@(EStr  {})                           =  e
+    f   (EUnary op e)                        =  EUnary op (toELambdaVars e)
+    f   (EBinary op e1 e2)                   =  EBinary op (toELambdaVars e1) (toELambdaVars e2)
+    f   (EIf e1 e2 e3)                       =  EIf (toELambdaVars e1) (toELambdaVars e2) (toELambdaVars e3)
+    f   (ELambda x e@(ELambda {}))           =  lambdas (x:) e
+    f   (ELambda x e@(ELambdaVars {}))       =  lambdas (x:) e
+    f   (ELambda x e)                        =  (ELambdaVars [x] (toELambdaVars e))
+    f   (ELambdaVars xs e@(ELambda {}))      =  lambdas (xs++) e
+    f   (ELambdaVars xs e@(ELambdaVars {}))  =  lambdas (xs++) e
+    f   (ELambdaVars xs e)                   =  (ELambdaVars xs (toELambdaVars e))
+    f e@(EVar {})                            =  e
+
+    lambdas xs (ELambda x e)       = lambdas (xs . (x:)) e
+    lambdas xs (ELambdaVars ys e)  = lambdas (xs . (ys ++)) e
+    lambdas xs  e                  = ELambdaVars (xs []) (toELambdaVars e)
 type Var = Int
 
 
