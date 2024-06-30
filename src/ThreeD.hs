@@ -85,6 +85,7 @@ sources g (Judge o) (x,y) | valid = [arg1, arg2] -- =, #
   where arg1 = (x-1, y  )
         arg2 = (x,   y-1)
         -- NOTE: ここでチェックしないと消すの面倒になる
+        -- getSourceCells を無くして sources で全部判断の方が良さそう
         valid = let (a, b) = (Hash.lookup arg1 g, Hash.lookup arg2 g)
                 in (isJust a && isJust b && a == b)
 sources g Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように先頭に
