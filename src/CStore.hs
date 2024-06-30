@@ -51,23 +51,29 @@ writeFile' path cont = do
 
 ---
 
-storeLang :: String -> IO ()
-storeLang pname = do
+storeLangFile :: String -> FilePath -> IO ()
+storeLangFile pname path = do
   putStrLn $ "geting " ++ pname ++ " ..."
   lang <- Comm.getLang pname
-  let path = problemsDir </> pname <.> etypeName ELang
   putStrLn $ "writing " ++ path ++ " with LAST NEWLINE ..."
   writeFile' (problemsDir </> pname <.> etypeName ELang) (lang <> "\n")
   putStrLn $ "done."
 
-delayedStoreLangList :: [String] -> IO ()
-delayedStoreLangList pns =
+delayedStoreLangList :: Bool -> [String] -> IO ()
+delayedStoreLangList overwrite pns =
   mapM_ action pns
   where
-    action n = do
-      storeLang n
-      putStrLn "delay .."
-      threadDelay (35 * 100 * 1000)
+    action pname = do
+      let path = problemsDir </> pname <.> etypeName ELang
+      let write = do
+            storeLangFile pname path
+            putStrLn "delay .."
+            threadDelay (35 * 100 * 1000)
+      alreadyExist <- doesFileExist path
+      case () of
+        () | not alreadyExist  -> write
+           | overwrite         -> putStrLn ("already exists, but proceeding with overwrite mode: " ++ pname) *> write
+           | otherwise         -> putStrLn ("already exists, skipping: " ++ path)
 
 catalogList :: [String]
 catalogList = [ "index", "echo", "language_test", "scoreboard" ]
