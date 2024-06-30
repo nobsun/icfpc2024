@@ -1,6 +1,7 @@
 module ThreeD where
 
-import Data.List (unfoldr)
+import Data.Char (ord, chr)
+import Data.List
 import qualified Data.Set as Set
 import qualified Data.HashMap.Strict as Hash
 import Data.Hashable
@@ -178,9 +179,35 @@ initBy vals g = g'
         vs = vars g
 
 runWith :: [(Char, Int)] -> Grid -> Space
-runWith vals g = run $ initBy vals g        
+runWith vals g = run $ initBy vals g
 
-            
+showGame :: (Int, Int) -> Grid -> String
+showGame (w, h) g = unlines $ map (intersperse ' ') $ grid
+  where
+    grid = [[toChar c
+            | x <- [0..w-1]
+            , let c = Hash.lookup (x, y) g]
+           | y <- [0..h-1]]
+    toChar :: Maybe Place -> Char
+    toChar Nothing = '.'
+    toChar (Just (Number n)) = chr $ ord '0' + n
+    toChar (Just (Operator (Move L)))    = '<'
+    toChar (Just (Operator (Move R)))    = '>'
+    toChar (Just (Operator (Move U)))    = '^'
+    toChar (Just (Operator (Move D)))    = 'v'
+    toChar (Just (Operator (Calc Add)))  = '+'
+    toChar (Just (Operator (Calc Sub)))  = '-'
+    toChar (Just (Operator (Calc Mul)))  = '*'
+    toChar (Just (Operator (Calc Quot))) = '/'
+    toChar (Just (Operator (Calc Rem)))  = '%'
+    toChar (Just (Operator (Judge Eql))) = '='
+    toChar (Just (Operator (Judge Neq))) = '#'
+    toChar (Just (Operator Warp))        = '@'
+    toChar (Just Submit)                 = 'S'
+    toChar (Just (Var v))                = v
+
+    
+
 {- | Grid Layout
   0 1 2
 0 . y .
@@ -206,29 +233,29 @@ sample = Hash.fromList [ ((0,1), Number 5) -- x
 -- 9 . . . . . 3 . . .
 --
 game :: Grid
-game = Hash.fromList [ ((0,4), Number 0)
+game = Hash.fromList [ ((4,0), Number 0)
                      , ((1,1), Var 'B')
-                     , ((1,2), Operator (Move R))
-                     , ((1,4), Operator (Judge Eql))
-                     , ((2,1), Operator (Move D))
+                     , ((2,1), Operator (Move R))
+                     , ((4,1), Operator (Judge Eql))
+                     , ((1,2), Operator (Move D))
                      , ((2,2), Number 1)
-                     , ((2,5), Operator (Move R))
-                     , ((3,2), Operator (Calc Sub))
-                     , ((3,6), Operator (Calc Add))
-                     , ((3,7), Submit)
-                     , ((4,5), Operator (Move U))
-                     , ((5,2), Operator (Move D))
+                     , ((5,2), Operator (Move R))
+                     , ((2,3), Operator (Calc Sub))
+                     , ((6,3), Operator (Calc Add))
+                     , ((7,3), Submit)
+                     , ((5,4), Operator (Move U))
+                     , ((2,5), Operator (Move D))
                      , ((5,5), Number 0)
-                     , ((5,6), Operator (Move R))
+                     , ((6,5), Operator (Move R))
                      , ((6,6), Var 'A')
-                     , ((6,7), Operator (Calc Add))
-                     , ((7,1), Number 1)
-                     , ((7,2), Operator Warp)
-                     , ((7,3), Number 6)
-                     , ((7,6), Operator (Move L))
-                     , ((8,2), Number 3)
-                     , ((8,4), Number 0)
-                     , ((8,5), Operator Warp)
-                     , ((8,6), Number 3)
-                     , ((9,5), Number 3)
+                     , ((7,6), Operator (Calc Add))
+                     , ((1,7), Number 1)
+                     , ((2,7), Operator Warp)
+                     , ((3,7), Number 6)
+                     , ((6,7), Operator (Move L))
+                     , ((2,8), Number 3)
+                     , ((4,8), Number 0)
+                     , ((5,8), Operator Warp)
+                     , ((6,8), Number 3)
+                     , ((5,9), Number 3)
                      ]
