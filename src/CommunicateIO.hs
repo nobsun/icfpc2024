@@ -9,6 +9,7 @@ import System.Process (readProcess)
 import Imports hiding (get)
 import CustomParser (parseExpr)
 import Expr
+import Pretty (pprInfix)
 
 communicateFile :: FilePath -> IO String
 communicateFile = (communicate_ =<<) . L8.readFile
@@ -24,6 +25,16 @@ command cmd x = communicate $ L8.fromChunks $ encode $ EStr $ fromString $ cmd <
 
 get :: String -> IO Expr
 get = command "get"
+
+get' :: String -> IO ()
+get' arg = do
+  expr <- get arg
+  case expr of
+    EStr s  -> B8.putStr s
+    _       -> print expr
+
+getPpr :: String -> IO ()
+getPpr arg = putStrLn . pprInfix =<< get arg
 
 echo :: String -> IO Expr
 echo = command "echo"
