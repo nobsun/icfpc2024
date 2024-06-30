@@ -12,9 +12,9 @@ data Direction = L | R | U | D deriving (Show, Eq)
 data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq)
 data Logic = Eql | Neq deriving (Show, Eq)
 
-data Op3D = Move Direction
-          | Calc Arith
-          | Judge Logic
+data Op3D = Move !Direction
+          | Calc !Arith
+          | Judge !Logic
           | Warp
           deriving (Show, Eq)
 
