@@ -186,6 +186,20 @@ step hist@(g:gs)
         phi (TimeWarp _ (c, p)) = Hash.insert c p
         TimeWarp t _ = head warps
 
+-- | c.f.) solveProblem "3d2/sol1.txt" [('A', 3),('B',2)]
+solveProblem :: String -> [(Char, Int)] -> IO ()
+solveProblem prob params = do
+  g <- readProblem prob
+  runAndDrawWith' params g
+
+
+runAndDrawWith' :: [(Char, Int)] -> Grid -> IO ()
+runAndDrawWith' vals g = runAndDrawWith (w+2, h+2) vals g
+  where w = maximum $ map fst g'
+        h = maximum $ map snd g'
+        g' = Hash.keys g
+
+
 runAndDrawWith :: (Int, Int) -> [(Char, Int)] -> Grid -> IO ()
 runAndDrawWith wh vals g = do
   forM_ (zip [1..] gs) $ \(t, g) -> do
