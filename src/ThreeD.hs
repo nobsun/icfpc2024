@@ -30,6 +30,7 @@ calc Rem  (Number x) (Number y) = Number (x `rem` y)
 judge :: Logic -> Place -> Place -> Bool
 judge Eql (Number x) (Number y) = x == y
 judge Neq (Number x) (Number y) = x /= y
+judge op x y = error $ "judge: impossible: " ++ show (op, x, y)
 
 type Cell = (Int, Int)
 type Grid = Hash.HashMap Cell Place
@@ -126,9 +127,10 @@ initBy vals g = g'
     g' = foldr phi g vals
       where
         phi :: (Char, Int) -> Grid -> Grid
-        phi (v, n) = Hash.insert c (Number n)
+        phi (v, n) h = foldr (phi . snd) h cs
           where
-            Just c = lookup v vs
+            phi c = Hash.insert c (Number n)
+            cs = filter ((==v) . fst) vs
 
         vs = vars g
 
@@ -237,6 +239,35 @@ showGame (w, h) g = unlines $ map (concat . map pad) grid
     toStr (Just Submit)                 = "S"
     toStr (Just (Var v))                = [v]
 
+
+readProblem :: String -> IO Grid
+readProblem prob = do
+  f <- readFile $ "solutions/" <> prob
+  let ls = map (readLine . words) $ lines f
+  let ret = zipWith (\y xs -> map (\(x,c) -> ((x,y),c)) xs) [0..] $ map (zip [0..]) ls
+  return $ Hash.fromList $ concatMap (mapMaybe sequenceA) ret
+  where
+    readLine :: [String] -> [Maybe Place]
+    readLine = map readPlace
+    
+    readPlace :: String -> Maybe Place
+    readPlace "." = Nothing
+    readPlace "<" = Just (Operator (Move L))
+    readPlace ">" = Just (Operator (Move R))
+    readPlace "^" = Just (Operator (Move U))
+    readPlace "v" = Just (Operator (Move D))
+    readPlace "+" = Just (Operator (Calc Add))
+    readPlace "-" = Just (Operator (Calc Sub))
+    readPlace "*" = Just (Operator (Calc Mul))
+    readPlace "/" = Just (Operator (Calc Quot))
+    readPlace "%" = Just (Operator (Calc Rem))
+    readPlace "=" = Just (Operator (Judge Eql))
+    readPlace "#" = Just (Operator (Judge Neq))
+    readPlace "@" = Just (Operator Warp)
+    readPlace "S" = Just Submit
+    readPlace "A" = Just (Var 'A')
+    readPlace "B" = Just (Var 'B')
+    readPlace s   = Just (Number (read s :: Int))
     
 
 {- | Grid Layout
