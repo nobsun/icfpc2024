@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Eval where
 
@@ -238,4 +239,3 @@ _allTests = [ _testNeg,
               _testEval,
               _testLim
             ]
-
