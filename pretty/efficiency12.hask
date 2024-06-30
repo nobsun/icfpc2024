@@ -10,8 +10,8 @@ then (((\ v1 -> (\ v2 -> v1 (v2 v2)) (\ v2 -> v1 (v2 v2))) (\ v5 v6 v7 ->
  else (v5 (v6 + 1)) (
   if (v3 v6) > (v6 - 1)
   then 
-   if (v4 `quot` v6) == 0
-   then (v7 `rem` (v3 v6)) * ((v3 v6) - 1)
+   if (v4 `rem` v6) == 0
+   then (v7 `quot` (v3 v6)) * ((v3 v6) - 1)
    else v7
 
   else v7
