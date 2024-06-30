@@ -90,10 +90,19 @@ sources Warp     (x,y) = [v,dx,dy,dt] -- @ v は取り出しやすいように�
         v  = (x,   y-1)
 sources _        _     = [] -- S, Var, Void
 
+-- | すべての snd が Just なら [(a, b)] は同じ要素数で Just を除去
+--   ひとつでも Nothing があれば空リストを返す
+squash :: [(a, Maybe b)] -> [(a, b)]
+squash = go []
+  where
+    go acc [] = reverse acc
+    go acc ((a, Just b):xs) = go ((a, b):acc) xs
+    go _ _ = []
+
 
 getSourceCells :: Grid -> (Cell, Place) -> [(Cell, Place)]
 getSourceCells g (p, Operator o)
-  = mapMaybe sequenceA [ (c, t) | c <- sources o p, let t = Hash.lookup c g]
+  = squash [ (c, t) | c <- sources o p, let t = Hash.lookup c g]
 getSourceCells _ _ = []
 
 
@@ -113,7 +122,7 @@ targets (Operator (Calc op)) (x, y) [(_, Number a), (_, Number b)]
         ret2 = (x, y+1)
         v = Number $ calc op a b
 targets (Operator (Judge op)) (x, y) [(_, Number a), (_, Number b)]
-  = mapMaybe sequenceA [(ret1, v),(ret2, v)]  -- =, #
+  = squash [(ret1, v),(ret2, v)]  -- =, #
   where ret1 = (x+1, y)
         ret2 = (x, y+1)
         v = if judge op a b then Just (Number a) else Nothing
@@ -135,11 +144,10 @@ updatables bombs g = foldr phi [] ops
     phi cell@(c, p@(Operator _)) acc = xs ++ acc
       where
         xs :: [Updatable]
-        xs = (Del <$> ss) <> (Upd <$> ts)
+        xs = (Del <$> ss) <> (Upd <$> ts) <> (Ban <$> bs)
         ss :: [(Cell, Place)]
         ss = getSourceCells g cell
-        ts :: [(Cell, Place)]
-        ts = targets p c ss
+        (ts, bs) = partition (\(x,_) -> Set.member x bombs) $ targets p c ss
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
 
@@ -150,7 +158,7 @@ step bombs g = foldr phi (Nothing, g) upd
     phi :: Updatable -> (Maybe Place, Grid) -> (Maybe Place, Grid)
     phi (Del (c, _)) (b, g') = (b, Hash.delete c g')
     phi (Upd (c, p)) (b, g') = (b, Hash.insert c p g')
-    phi (Ban (c, _)) (b, g') = (b, Hash.delete c g')
+    phi (Ban (c, p)) (b, g') = (Just p, Hash.insert c p g')
     
     upd = updatables bombs g
 
@@ -180,6 +188,19 @@ initBy vals g = g'
 
 runWith :: [(Char, Int)] -> Grid -> Space
 runWith vals g = run $ initBy vals g
+
+runAndDrawWith :: [(Char, Int)] -> (Int, Int) -> Grid -> IO ()
+runAndDrawWith vals wh g
+  = mapM_ (putStrLn . showGame' wh) $ runWith vals g
+
+drawGame :: (Int, Int) -> Grid -> IO ()
+drawGame (w, h) g = putStrLn $ showGame' (w, h) (0, g)
+
+showGame' :: (Int, Int) -> (Tick, Grid) -> String
+showGame' wh@(w, h) (t, g)
+  = unlines [showTick t, showGame wh g]
+  where
+    showTick t = "Tick: " <> show t
 
 showGame :: (Int, Int) -> Grid -> String
 showGame (w, h) g = unlines $ map (intersperse ' ') $ grid
