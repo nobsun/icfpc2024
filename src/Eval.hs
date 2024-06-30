@@ -155,7 +155,9 @@ binary env brc Apply e1 e2 = do
 
 
 -----
-test :: Expr -> String -> (Bool, BetaReductionCount, Expr, Expr)
+type TestResult = (Bool, BetaReductionCount, Expr, Expr)
+
+test :: Expr -> String -> TestResult
 test expected s = do
   let Right e = parseExpr "test" $ BS.pack s
   let Right (_, bcr, actual) = eval [] 0 e
@@ -166,6 +168,8 @@ _testNeg = test (EInt (-3)) "U- I$"
 _testNot = test (EBool False) "U! T"
 _testI2S = test (EInt 15818151) "U# S4%34"
 _testS2I = test (EStr "test") "U$ I4%34"
+
+_testNeg, _testNot, _testI2S, _testS2I :: TestResult
 
 -- Binary
 _testAdd  = test (EInt 5) "B+ I# I$"
@@ -182,6 +186,10 @@ _testComp = test (EStr "test") "B. S4% S34"
 _testTake = test (EStr "tes") "BT I$ S4%34"
 _testDrop = test (EStr "t") "BD I$ S4%34"
 
+
+_testAdd, _testSub, _testMul, _testQuot, _testRem  :: TestResult
+_testLt, _testGt, _testEq, _testOr, _testAnd, _testComp, _testTake, _testDrop :: TestResult
+
 -- If
 _testIf = test (EStr "no") "? B> I# I$ S9%3 S./"
 
@@ -194,8 +202,9 @@ _testEval = test (EInt 12) "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8"
 
 -- Limit
 _testLim = test (EInt 16) "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
+_testLim' :: Bool
 _testLim' = snd4 _testLim == 109
-  where snd4 (a, b, c, d) = b
+  where snd4 (_a, b, _c, _d) = b
 
 -- I combinator
 -- I 42
@@ -209,14 +218,19 @@ _testS = test (EInt 42) "B$ B$ B$ L# L$ L% B$ B$ v# v% B$ v$ v% L# L$ v# L# L$ v
 -- K 42 3
 _testK = test (EInt 42) "B$ B$ L# L$ v# IK I!"
 
+_testIf, _testLam, _testEval, _testLim, _testI, _testS, _testK :: TestResult
+--   ,_testAll
+
 _p21 :: BS.ByteString
 _p21 = "B$ B$ L\" B$ L# B$ v\" B$ v# v# L# B$ v\" B$ v# v# L\" L# ? B= v# I! I\" B$ L$ B+ B$ v\" v$ B$ v\" v$ B- v# I\" I%"
 
 _p21' :: BS.ByteString
 _p21' = "[(L\" [(L# (v\" (v# v#))) (L# (v\" (v# v#)))])    [L\" L# {? (B= v# I!) I\" [(L$ (B+ (v\" v$) (v\" v$))) (B- v# I\")]}]]   I%"
 
+_testAll :: Bool
 _testAll = and $ map fst4 _allTests
           where fst4 (a, _, _, _) = a
+_allTests :: [TestResult]
 _allTests = [ _testNeg,
               _testNot,
               _testI2S,
