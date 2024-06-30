@@ -23,7 +23,7 @@ type Env = [(Var, Expr)]
 type BetaReductionCount = Integer
 
 evalExpr :: Expr -> Either String (Env, BetaReductionCount, Expr)
-evalExpr = eval [] 0
+evalExpr = eval [] 0 . unELambdaVars
 
 {- TODO: call-by-need
    - pure でやるには eval の結果で書き換える変数と環境が必要?
@@ -43,6 +43,7 @@ eval env brc e = case e of
       EBool False -> eval env brc' e
       _           -> Left "If condition is not a boolean"
   ELambda v b -> Right (env, brc, ELambda v b) -- TODO
+  ELambdaVars {} -> Left "apply after `unELambdaVars`"
   EVar v      -> maybe (Left msg) (eval env brc) $ lookup v env
     where
       msg = "Variable " ++ show v ++ " not found"

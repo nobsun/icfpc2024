@@ -8,6 +8,7 @@ module Expr
   , UOp (..)
   , BinOp (..)
   , Token
+  , unELambdaVars
   , toExpr2
   , fromExpr2
   , encode
@@ -22,7 +23,7 @@ module Expr
 
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BS
-import Data.IntMap (IntMap)
+-- import Data.IntMap (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
@@ -41,6 +42,7 @@ data Expr' a
   | EBinary !BinOp (Expr' a) (Expr' a)
   | EIf (Expr' a) (Expr' a) (Expr' a)
   | ELambda !Var (Expr' a)
+  | ELambdaVars ![Var] (Expr' a)
   | EVar !Var
   deriving (Eq, Show, Read, Functor)
 
@@ -52,6 +54,18 @@ toExpr2 = fmap toICFPCString
 fromExpr2 :: Expr2 -> Expr
 fromExpr2 = fmap fromICFPCString
 
+unELambdaVars :: Expr' a -> Expr' a
+unELambdaVars e@(EBool {})              = e
+unELambdaVars e@(EInt  {})              = e
+unELambdaVars e@(EStr  {})              = e
+unELambdaVars   (EUnary op e)           = EUnary op (unELambdaVars e)
+unELambdaVars   (EBinary op e1 e2)      = EBinary op (unELambdaVars e1) (unELambdaVars e2)
+unELambdaVars   (EIf e1 e2 e3)          = EIf (unELambdaVars e1) (unELambdaVars e2) (unELambdaVars e3)
+unELambdaVars   (ELambda x e)           = ELambda x (unELambdaVars e)
+unELambdaVars   (ELambdaVars [] e)      = unELambdaVars e  {- not reach -}
+unELambdaVars   (ELambdaVars [x] e)     = ELambda x (unELambdaVars e)
+unELambdaVars   (ELambdaVars (x:xs) e)  = ELambda x (unELambdaVars $ ELambdaVars xs e)
+unELambdaVars e@(EVar {})               = e
 
 type Var = Int
 
@@ -98,6 +112,7 @@ encode (EUnary op e) = encodeUOp op : encode e
 encode (EBinary op e1 e2) = encodeBinOp op : encode e1 ++ encode e2
 encode (EIf e1 e2 e3) = tokenIf : encode e1 ++ encode e2 ++ encode e3
 encode (ELambda x e) = encodeLambda x : encode e
+encode e@(ELambdaVars {}) = encode $ unELambdaVars e
 encode (EVar x) = [encodeVar x]
 
 
@@ -201,6 +216,7 @@ fvs (EUnary _ e) = fvs e
 fvs (EBinary _ e1 e2) = fvs e1 `IntSet.union` fvs e2
 fvs (EIf e1 e2 e3) = IntSet.unions $ map fvs [e1, e2, e3]
 fvs (ELambda v e) = IntSet.delete v (fvs e)
+fvs e@(ELambdaVars {}) = fvs (unELambdaVars e)
 fvs (EVar v) = IntSet.singleton v
 
 
@@ -221,6 +237,7 @@ renameBoundVariables vs = f (IntMap.fromList [(v, v) | v <- IntSet.toAscList vs]
            in ELambda v2 (f m2 e)
       | otherwise =
           ELambda v (f (IntMap.insert v v m) e)
+    f m e@(ELambdaVars {}) = f m (unELambdaVars e)
     f m (EVar v) =
       case IntMap.lookup v m of
         Just v2 -> EVar v2
