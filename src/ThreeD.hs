@@ -1,13 +1,14 @@
 {-# LANGUAGE GHC2021 #-}
 module ThreeD where
 
+import Control.Arrow (second)
 import Control.Monad (forM_)
 import Data.Char (ord, chr)
 import Data.Function (on)
 import qualified Data.HashMap.Strict as Hash
-import Data.List (foldl', foldr, find, partition)
+import Data.List -- (foldl', foldr, find, partition, unfoldr)
 import qualified Data.Map as Map
-import Data.Maybe (fromJust, mapMaybe, isJust)
+import Data.Maybe (fromJust, mapMaybe, isJust, isNothing)
 import qualified Data.Set as Set
 
 data Direction = L | R | U | D deriving (Show, Eq)
@@ -131,83 +132,88 @@ initBy vals g = g'
 
         vs = vars g
 
-step :: Space -> (Maybe Int, Space)
-step [] = (Nothing, [])
-step hist@(g:_)
-  | not (null submitConflicts) = error $ "submit conflict occured: " ++ show submitConflicts
-  | not (null writeConflicts)  = error $ "write conflict occured: " ++ show writeConflicts
-  | isJust done      = (retVal, g':hist)
-  | not (null warps) = (Nothing, timewarp:hist)
-  | otherwise        = (Nothing, g':hist)
+-- | ステップの無限列を生成するので停止させるのは外でやる (fst が Just になったら止める)
+steps :: Grid -> [(Maybe Int, Grid)]
+steps initGrid = unfoldr psi [(Nothing, initGrid)]
   where
-    g' = foldr phi g upds
+    psi :: [(Maybe Int, Grid)] -> Maybe ((Maybe Int, Grid), [(Maybe Int, Grid)])
+    psi [] = error "unreachable!"
+    psi hist@((_, g):_)
+      | not (null submitConflicts) = error $ "submit conflict occured: " ++ show submitConflicts
+      | not (null writeConflicts)  = error $ "write conflict occured: " ++ show writeConflicts
+      | isJust done                = let r = (retVal, g') in Just (r, r:hist)
+      | not (null warps)           = let r = (Nothing, timewarp) in Just (r, r:hist)
+      | otherwise                  = let r = (retVal, g') in Just (r, r:hist)
       where
-        phi :: Update -> Grid -> Grid
-        phi (Erase cs) h = foldr (Hash.delete . fst) h cs
-        phi (Write cs) h = foldr (uncurry Hash.insert) h cs
-        phi (TimeWarp _ _) h = h -- NOTE: submit の時には何もしない
-    
-    ops :: [(Cell, Place)]
-    ops = Hash.toList $ operators g
-
-    upds :: [Update]
-    upds = concatMap (operate g) ops
-
-    wrs :: [Update]
-    wrs = filter f upds
-      where
-        f (Write _) = True
-        f _         = False
-        
-    sbmts :: [(Cell, Place)]
-    sbmts = filter (isSubmit . snd) $ Hash.toList g
-
-    conflicts :: [(Cell, Place)]
-    conflicts = concatMap f wrs
-      where
-        f (Write cs) = cs
-        f u          = error $ "unexpected update: " ++ show u
-        
-    (submitConflicts, writeConflicts) = (ss', ws')
-      where
-        groupBy' :: forall a k. (Eq k, Ord k) => (a -> k) -> [a] -> [[a]]
-        groupBy' f = Map.elems . foldr phi Map.empty
+        g' = foldr phi g upds
           where
-            phi :: a -> Map.Map k [a] -> Map.Map k [a]
-            phi x = Map.insertWith (<>) (f x) [x]
-        
-        ss, ws :: [(Cell, Place)]
-        (ss, ws) = partition (\(c, _) -> c `elem` map fst sbmts) conflicts
-        -- 同一の Submit Cell に対する Write は同じ値でなければ Conflict
-        ss' = filter (\xs -> not . and $ zipWith (/=) xs (tail xs)) $ groupBy' fst ss
-        -- Submit Cell 以外は同一の Cell に対する Write は複数あったら Conflict
-        ws' = filter (\xs -> length xs > 1) $ groupBy' fst ws
+            phi :: Update -> Grid -> Grid
+            phi (Erase cs) h = foldr (Hash.delete . fst) h cs
+            phi (Write cs) h = foldr (uncurry Hash.insert) h cs
+            phi (TimeWarp _ _) h = h -- NOTE: submit の時には何もしない
 
-    done :: Maybe Update
-    done = find f wrs
-      where
-        f (Write cs) = any (\(c, _) -> c `elem` map fst sbmts) cs
-        f _          = False
+        ops :: [(Cell, Place)]
+        ops = Hash.toList $ operators g
 
-    retVal :: Maybe Int
-    retVal = do
-      Write ((_, Number v):_) <- done
-      return v
-    
-    warps :: [Update]
-    warps = filter isWarp upds
-      where
-        isWarp (TimeWarp _ _) = True
-        isWarp _              = False
+        upds :: [Update]
+        upds = concatMap (operate g) ops
 
-    -- NOTE: Timewarp がある場合は全て同じ Tick に戻るはず
-    timewarp = foldr phi (hist !! t) warps
-      where
-        phi (TimeWarp _ (c, p)) = Hash.insert c p
-        phi op = error $ "unexpected warp action: " ++ show op
-        t = case head warps of
-          TimeWarp tick _ -> tick
-          op              -> error $ "unexpected warp action: " ++ show op
+        wrs :: [Update]
+        wrs = filter f upds
+          where
+            f (Write _) = True
+            f _         = False
+
+        sbmts :: [(Cell, Place)]
+        sbmts = filter (isSubmit . snd) $ Hash.toList g
+
+        conflicts :: [(Cell, Place)]
+        conflicts = concatMap f wrs
+          where
+            f (Write cs) = cs
+            f u          = error $ "unexpected update: " ++ show u
+
+        (submitConflicts, writeConflicts) = (ss', ws')
+          where
+            groupBy' :: forall a k. (Eq k, Ord k) => (a -> k) -> [a] -> [[a]]
+            groupBy' f = Map.elems . foldr phi Map.empty
+              where
+                phi :: a -> Map.Map k [a] -> Map.Map k [a]
+                phi x = Map.insertWith (<>) (f x) [x]
+            
+            ss, ws :: [(Cell, Place)]
+            (ss, ws) = partition (\(c, _) -> c `elem` map fst sbmts) conflicts
+            -- 同一の Submit Cell に対する Write は同じ値でなければ Conflict
+            ss' = filter (\xs -> not . and $ zipWith (/=) xs (tail xs)) $ groupBy' fst ss
+            -- Submit Cell 以外は同一の Cell に対する Write は複数あったら Conflict
+            ws' = filter (\xs -> length xs > 1) $ groupBy' fst ws
+
+        done :: Maybe Update
+        done = find f wrs
+          where
+            f (Write cs) = any (\(c, _) -> c `elem` map fst sbmts) cs
+            f _          = False
+
+        retVal :: Maybe Int
+        retVal = do
+          Write ((_, Number v):_) <- done
+          return v
+
+        warps :: [Update]
+        warps = filter isWarp upds
+          where
+            isWarp (TimeWarp _ _) = True
+            isWarp _              = False
+
+        -- NOTE: Timewarp がある場合は全て同じ Tick に戻るはず
+        timewarp = foldr phi (snd (hist !! t)) warps
+          where
+            phi (TimeWarp _ (c, p)) = Hash.insert c p
+            phi op = error $ "unexpected warp action: " ++ show op
+            t = case head warps of
+              TimeWarp tick _ -> tick
+              op              -> error $ "unexpected warp action: " ++ show op
+
 
 -- | c.f.) solveProblem "3d2/sol1.txt" [('A', 3),('B',2)]
 solveProblem :: String -> [(Char, Int)] -> IO ()
@@ -225,23 +231,22 @@ runAndDrawWith' vals g = runAndDrawWith (w+2, h+2) vals g
 
 runAndDrawWith :: (Int, Int) -> [(Char, Int)] -> Grid -> IO ()
 runAndDrawWith wh vals g = do
-  forM_ (zip [1::Int ..] gs) $ \(t, g') -> do
+  forM_ (zip [1::Int ..] gs) $ \(t, (v, g')) -> do
     putStrLn $ "Step " ++ show t ++ ":"
     drawGame wh g'
     putStrLn ""
-  putStrLn $ "Result: " ++ show v
-  where (v, gs) = runWith vals g
+    maybe (putStr "") (\val -> putStrLn $ "Result: " ++ show val) v
+  where gs = runWith vals g
 
-runWith :: [(Char, Int)] -> Grid -> (Int, Space)
+runWith :: [(Char, Int)] -> Grid -> [(Maybe Int, Grid)]
 runWith vals g = run $ initBy vals g
 
-run :: Grid -> (Int, Space)
-run g = go [g]
+run :: Grid -> [(Maybe Int, Grid)]
+run = snoc . second head . break (isJust . fst) . steps
   where
-    go :: Space -> (Int, Space)
-    go gs = case step gs of
-      (Nothing, gs') -> go gs'
-      (Just v,  gs') -> (v, reverse gs')
+    snoc :: ([a], a) -> [a]
+    snoc (xs, x) = xs ++ [x]
+
 
 drawGame :: (Int, Int) -> Grid -> IO ()
 drawGame (w, h) g = putStrLn $ showGame (w, h) g
