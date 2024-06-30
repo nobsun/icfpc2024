@@ -20,7 +20,7 @@ module Value
   , vTake
   , vDrop
   , vApply
-  
+
   , vIf
 
   , exprToHaskellExpr
@@ -38,38 +38,67 @@ data Value
   | VStr BS.ByteString
   | VFun (Value -> Value)
 
+instance Show Value where
+  show v = case v of
+    VBool b  -> "VBool " ++ show b
+    VInt  i  -> "VInt "  ++ show i
+    VStr  s  -> "VStr "  ++ show s
+    VFun  _  -> "VFun {..}"
+
+verror :: Show v => String -> String -> [v] -> a
+verror n t vs = error $ n ++ ": not " ++ t ++ ": " ++ unwords (map show vs)
+
 vNeg :: Value -> Value
 vNeg (VInt x) = VInt (-x)
+vNeg  v       = verror "vNeg" "int" [v]
 
 vNot :: Value -> Value
 vNot (VBool x) = VBool $ not x
+vNot  v        = verror "vNot" "bool" [v]
 
 vStrToInt :: Value -> Value
 vStrToInt (VStr s) = VInt $ decodeBase94 $ humanToCult s
+vStrToInt  v       = verror "vStrToInt" "str" [v]
 
 vIntToStr :: Value -> Value
 vIntToStr (VInt n) = VStr $ cultToHuman $ encodeBase94 n
+vIntToStr  v       = verror "vIntToStr" "int" [v]
 
 vAdd, vSub, vMult, vDiv, vMod, vLt, vGt, vEql, vOr, vAnd, vConcat, vTake, vDrop, vApply :: Value -> Value -> Value
 vAdd    (VInt n1) (VInt n2) = VInt (n1 + n2)
+vAdd     v1        v2       = verror "vAdd" "int int" [v1, v2]
 vSub    (VInt n1) (VInt n2) = VInt (n1 - n2)
+vSub     v1        v2       = verror "vSub" "int int" [v1, v2]
 vMult   (VInt n1) (VInt n2) = VInt (n1 * n2)
+vMult     v1        v2       = verror "vMult" "int int" [v1, v2]
 vDiv    (VInt n1) (VInt n2) = VInt (n1 `quot` n2)
+vDiv     v1        v2       = verror "vDiv" "int int" [v1, v2]
 vMod    (VInt n1) (VInt n2) = VInt (n1 `rem` n2)
+vMod     v1        v2       = verror "vMod" "int int" [v1, v2]
 vLt     (VInt n1) (VInt n2) = VBool (n1 < n2)
+vLt      v1        v2       = verror "vLt" "int int" [v1, v2]
 vGt     (VInt n1) (VInt n2) = VBool (n1 > n2)
+vGt      v1        v2       = verror "vGt" "int int" [v1, v2]
 vEql    (VInt n1) (VInt n2) = VBool (n1 == n2)
 vEql    (VBool b1) (VBool b2) = VBool (b1 == b2)
 vEql    (VStr s1) (VStr s2) = VBool (s1 == s2)
+vEql     v1        v2       = verror "vEql" "int int / bool bool / str str" [v1, v2]
 vOr     (VBool b1) (VBool b2) = VBool (b1 || b2)
+vOr      v1        v2       = verror "vOr" "bool bool" [v1, v2]
 vAnd    (VBool b1) (VBool b2) = VBool (b1 && b2)
+vAnd     v1        v2       = verror "vAnd" "bool bool" [v1, v2]
 vConcat (VStr s1) (VStr s2) = VStr (s1 <> s2)
+vConcat  v1        v2       = verror "vConcat" "str str" [v1, v2]
 vTake   (VInt n) (VStr s) = VStr (BS.take (fromIntegral n) s)
+vTake    v1        v2     = verror "vTake" "int int" [v1, v2]
 vDrop   (VInt n) (VStr s) = VStr (BS.drop (fromIntegral n) s)
+vDrop    v1        v2     = verror "vTake" "int int" [v1, v2]
 vApply  (VFun f) v = f v
+vApply   f       v = verror "vApply" "fun value" [f, v]
 
 vIf :: Value -> Value -> Value -> Value
 vIf (VBool b) v1 v2 = if b then v1 else v2
+vIf  b        v1 v2 = verror "vIf" "bool value value" [b, v1, v2]
 
 exprToHaskellExpr :: Expr -> String
 exprToHaskellExpr = ($ "") . f

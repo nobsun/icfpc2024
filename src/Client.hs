@@ -2,22 +2,21 @@
 module Client where
 
 import Control.Exception
-import Data.Char (chr, ord, isSpace)
-import Data.Maybe (mapMaybe)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
-import Data.Void
+-- import Data.Void
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Network.HTTP.Client (defaultManagerSettings, RequestBody (RequestBodyLBS))
-import Text.Megaparsec (ParseErrorBundle)
+-- import Text.Megaparsec (ParseErrorBundle)
 
+import Imports
 import Expr
-import Eval (evalExpr)
-import Parser (parseExpr)
+-- import Eval (evalExpr)
+import Parser (ICFPError, parseExpr)
 import qualified Value
 import SpaceShip
 
+simplePost :: String -> IO (Either ICFPError Expr)
 simplePost raw = do
   token <- readToken
 
@@ -121,10 +120,10 @@ submitExpr name solution = do
 readToken :: IO BS.ByteString
 readToken = BS.dropWhileEnd isSpace <$> BS.dropWhile isSpace <$> BS.readFile "token.txt"
 
-postString :: String -> IO (Either (ParseErrorBundle [BS.ByteString] Void) Expr)
+postString :: String -> IO (Either ICFPError Expr)
 postString s = postExpr (EStr (BS.pack s))
 
-postExpr :: Expr -> IO (Either (ParseErrorBundle [BS.ByteString] Void) Expr)
+postExpr :: Expr -> IO (Either ICFPError Expr)
 postExpr expr = do
   token <- readToken
 
@@ -149,7 +148,7 @@ check prob = do
   print $ "New: " ++ show (length new)
   if length old > length new
     then do
-      print "Improved"
+      putStrLn "\"Improved\""
       submitSolution prob new
     else
-      print "No improvement"
+      putStrLn "\"No improvement\""

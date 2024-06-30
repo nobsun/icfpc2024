@@ -13,8 +13,8 @@ import Data.Function (on)
 import Data.List
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Set (Set)
-import qualified Data.Set as Set
+-- import Data.Set (Set)
+-- import qualified Data.Set as Set
 
 type Pos = (Int, Int)
 
@@ -37,7 +37,12 @@ solveFileBy :: (String -> String) -> FilePath -> IO String
 solveFileBy solver fname = solver <$> readFile fname
 
 parse :: String -> Problem
-parse s = [(x,y) | l <- lines s, not (null l), let [x,y] = map read $ words l]
+parse s =  [ p
+           | l <- lines s, not (null l)
+           , let p = case map read $ words l of
+                       [x,y] -> (x, y)
+                       xs    -> error ("not pair: " ++ show xs)
+           ]
 
 solveNaive :: Problem -> String
 solveNaive prob = map ((moveToChar Map.!) . fst) $ solveNaive' prob
@@ -67,8 +72,8 @@ solveNaive' prob = f ((0,0), (0,0)) [] prob
     choose1DMove :: Int -> Int -> Int -> Int
     choose1DMove x v target
       | x > target = - choose1DMove (-x) (-v) (-target)
-      | otherwise  = h (target - x) v        
-     
+      | otherwise  = h (target - x) v
+
     h dist v
       -- assume: 0 <= dist
       | dist == 0 = - signum v
@@ -90,12 +95,12 @@ distance :: Pos -> Pos -> Float
 distance (x1,y1) (x2,y2) = abs (fromIntegral (x1 - x2)) + abs (fromIntegral (y1 - y2))
 
 nearbySort :: [Pos] -> [Pos]
-nearbySort ps = unfoldr psi start
+nearbySort ps0 = unfoldr psi start
   where
     psi [] = Nothing
     psi (p:ps) = Just (p, sortBy (compare `on` distance p) ps)
-    start = sortBy (compare `on` distance (0,0)) ps
-  
+    start = sortBy (compare `on` distance (0,0)) ps0
+
 type Move = (Int, Int)
 
 -- 789
