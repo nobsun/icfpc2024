@@ -37,10 +37,10 @@ type Grid = Hash.HashMap Cell Place
 type Tick = Int
 type Space = [Grid]
 
-data Place = Operator Op3D
-           | Number   Int
+data Place = Operator !Op3D
+           | Number   !Int
            | Submit
-           | Var Char  -- 'A' and 'B' only
+           | Var !Char  -- 'A' and 'B' only
            deriving (Show, Eq)
 
 instance Hashable Place where
@@ -72,9 +72,9 @@ vars g = map (f . swap) $ Hash.toList vs
     f (Var v, c) = (v, c)
     f _ = error "vars: impossible"
 
-data Update = Erase [(Cell, Place)]
-            | Write [(Cell, Place)]
-            | TimeWarp Tick (Cell, Place)
+data Update = Erase ![(Cell, Place)]
+            | Write ![(Cell, Place)]
+            | TimeWarp !Tick !(Cell, Place)
             deriving (Show, Eq)
 
 -- 各オペレータの更新動作アクション
@@ -136,7 +136,7 @@ initBy vals g = g'
 
 step :: Space -> (Maybe Int, Space)
 step [] = (Nothing, [])
-step hist@(g:gs)
+step hist@(g:_)
   | isJust done      = (retVal, g':hist)
   | not (null warps) = (Nothing, timewarp:hist)
   | otherwise        = (Nothing, g':hist)
@@ -180,11 +180,14 @@ step hist@(g:gs)
         isWarp (TimeWarp _ _) = True
         isWarp _              = False
 
-    -- Timewarp がある場合は全て同じ Tick に戻るはず
+    -- NOTE: Timewarp がある場合は全て同じ Tick に戻るはず
     timewarp = foldr phi (hist !! t) warps
       where
         phi (TimeWarp _ (c, p)) = Hash.insert c p
-        TimeWarp t _ = head warps
+        phi op = error $ "unexpected warp action: " ++ show op
+        t = case head warps of
+          TimeWarp tick _ -> tick
+          op              -> error $ "unexpected warp action: " ++ show op
 
 -- | c.f.) solveProblem "3d2/sol1.txt" [('A', 3),('B',2)]
 solveProblem :: String -> [(Char, Int)] -> IO ()
@@ -224,7 +227,7 @@ drawGame :: (Int, Int) -> Grid -> IO ()
 drawGame (w, h) g = putStrLn $ showGame (w, h) g
 
 showGame :: (Int, Int) -> Grid -> String
-showGame (w, h) g = unlines $ map (concat . map pad) grid
+showGame (w, h) g = unlines $ map (concatMap pad) grid
   where
     pad s = case length s of
       1 -> ' ' : s
