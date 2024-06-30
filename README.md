@@ -9,6 +9,11 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
 * [Masahiro Sakai](https://github.com/msakai)
 * [Nobuo Yamashita](https://github.com/nobsun)
 
+## Languages
+
+* Haskell
+* Python
+
 ## Usage
 
 * Place your token (e.g. `????????-????-????-????-????????????`) in `token.txt`.
