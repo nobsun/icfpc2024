@@ -1,0 +1,1 @@
+EStr "# Input\n  `-100 <= A <= 100` and `-100 <= B <= 100`\n\n# Output\n  The maximum of `A` and `B`.\n\n# Example\n  * `A = 3`\n    `B = 7`\n    `Answer = 7`\n  * `A = -2`\n    `B = -6`\n    `Answer = -2`\n"

@@ -1,0 +1,1 @@
+EStr "# Input\n  `1 <= A <= 100`\n\n# Output\n  The factorial of `A`.\n  `A! = 1 * 2 * .. * (A - 1) * A`\n\n# Example\n  * `A = 5`\n    `Answer = 120`\n"

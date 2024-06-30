@@ -1,0 +1,1 @@
+EStr "The School of the Bound Variable provides a special echo service for you. If you send an ICFP expression evaluating to:\n\n```\necho <some text>\n```\n\nit will respond with `<some text>`.\n\nHint: you can use this to validate the Macroware Insight evaluator has the expected behavior. Of course the usual limitations still apply.\n"
