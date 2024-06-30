@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Pretty where
@@ -35,16 +36,25 @@ unwordspp (w:ws)  = foldl' (<+>) w ws
 -----
 
 pprInfix :: Expr -> String
-pprInfix = ppsString . pprExpr (PInfix, 0)
+pprInfix = ppsString . pprExpr (Cxt PInfix LangICFP 0)
 
 pprPrefix :: Expr -> String
-pprPrefix = ppsString . pprExpr (PPrefix, 0)
+pprPrefix = ppsString . pprExpr (Cxt PPrefix LangICFP 0)
 
-data PprFix
+data PPFix
   = PInfix
   | PPrefix
 
-type Cxt = (PprFix, Int)
+data OutMode
+  = Haskell
+  | LangICFP
+
+data Cxt =
+  Cxt
+  { ppFix :: PPFix
+  , ppOutMode :: OutMode
+  , ppIfIndent :: Int
+  }
 
 pprExpr :: Cxt -> Expr -> PPString
 pprExpr cx e0 = case toELambdaVars e0 of
@@ -82,7 +92,7 @@ pprBinary :: Cxt -> BinOp -> Expr -> Expr -> PPString
 pprBinary pf op e1 e2 = pprBOp pf op (parenExpr pf e1) (parenExpr pf e2)
 
 pprBOp :: Cxt -> BinOp -> PPString -> PPString -> PPString
-pprBOp (pprFix, _) b = case b of
+pprBOp Cxt{ppFix} b = case b of
   Add     ->  opInfix "+"
   Sub     ->  opInfix "-"
   Mult    ->  opInfix "*"
@@ -102,7 +112,7 @@ pprBOp (pprFix, _) b = case b of
   ApplyLazy   ->  apply
   ApplyEager  ->  \x y -> x <+> "$!" <+> y
   where
-    opInfix  op = case pprFix of
+    opInfix  op = case ppFix of
       PInfix   -> ppInfix op
       PPrefix  -> ppPrefix op
     opPrefix op = ppPrefix op
@@ -113,13 +123,13 @@ pprBOp (pprFix, _) b = case b of
 
 pprIf :: Cxt -> Expr -> Expr -> Expr -> PPString
 -- pprIf pf e1 e2 e3 = "if" <+> parenExpr pf e1 <+> parenExpr pf e2 <+> parenExpr pf e3
-pprIf (pf, ilv) e1 e2 e3 =
+pprIf cx@Cxt{ppIfIndent} e1 e2 e3 =
   "\n" <> indent <> "if" <+> pprExpr cx' e1     <>
   "\n" <> indent <> "then" <+>  pprExpr cx' e2  <>
   "\n" <> indent <> "else" <+>  pprExpr cx' e3  <>
   "\n"
-  where cx' = (pf, succ ilv)
-        indent = pps $ replicate ilv ' '
+  where cx' = cx{ppIfIndent = succ ppIfIndent}
+        indent = pps $ replicate ppIfIndent ' '
 
 pprLambda :: Cxt -> Var -> Expr -> PPString
 pprLambda pf v e = pprLambdaVars pf [v] e
