@@ -25,6 +25,10 @@ type BetaReductionCount = Integer
 evalExpr :: Expr -> Either String (Env, BetaReductionCount, Expr)
 evalExpr = eval [] 0
 
+{- TODO: call-by-need
+   - pure でやるには eval の結果で書き換える変数と環境が必要?
+   - 変数 lookup の結果を reference で返すようにして、利用先で本当に書き換えてしまうのが一番簡単そう
+ -}
 eval :: Env -> BetaReductionCount -> Expr -> Either String (Env, BetaReductionCount, Expr)
 eval env brc e = case e of
   EBool _b  -> Right (env, brc, e)
@@ -154,6 +158,17 @@ binary env brc Apply e1 e2 = do
   case renameBoundVariables (IntSet.fromList $ map fst env') e1' of
     ELambda v e'  -> let env'' = (v, e2):env' in eval env'' (brc'+1) e'
     _             -> Left $ "Apply applied to non-lambda: e1=" ++ show e1 ++ ",e2=" ++ show e2 ++ ",env=" ++ show env
+binary env brc ApplyLazy e1 e2 = do
+  (env', brc', e1') <- eval env brc e1
+  case renameBoundVariables (IntSet.fromList $ map fst env') e1' of
+    ELambda v e'  -> let env'' = (v, e2):env' in eval env'' (brc'+1) e'
+    _             -> Left $ "ApplyLazy applied to non-lambda: e1=" ++ show e1 ++ ",e2=" ++ show e2 ++ ",env=" ++ show env
+binary env brc ApplyEager e1 e2 = do
+  (env1, brc1, e1') <- eval env brc e1
+  (env2, brc2, e2') <- eval env1 brc1 e2
+  case renameBoundVariables (IntSet.fromList $ map fst env2) e1' of
+    ELambda v e'  -> let envL = (v, e2'):env2 in eval envL (brc2+1) e'
+    _             -> Left $ "ApplyEager applied to non-lambda: e1=" ++ show e1 ++ ",e2=" ++ show e2 ++ ",env=" ++ show env
 
 
 -----
