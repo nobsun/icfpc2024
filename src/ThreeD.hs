@@ -2,11 +2,11 @@ module ThreeD where
 
 import Control.Monad (forM_)
 import Data.Char (ord, chr)
-import Data.List (foldl', foldr, find)
-import qualified Data.Set as Set
-import qualified Data.HashMap.Strict as Hash
 import Data.Hashable (Hashable, hashWithSalt, defaultHashWithSalt)
+import qualified Data.HashMap.Strict as Hash
+import Data.List (foldl', foldr, find)
 import Data.Maybe (fromJust, mapMaybe, isJust)
+import qualified Data.Set as Set
 
 data Direction = L | R | U | D deriving (Show, Eq)
 data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq)
