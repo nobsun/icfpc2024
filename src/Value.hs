@@ -64,7 +64,8 @@ vIntToStr :: Value -> Value
 vIntToStr (VInt n) = VStr $ cultToHuman $ encodeBase94 n
 vIntToStr  v       = verror "vIntToStr" "int" [v]
 
-vAdd, vSub, vMult, vDiv, vMod, vLt, vGt, vEql, vOr, vAnd, vConcat, vTake, vDrop, vApply :: Value -> Value -> Value
+vAdd, vSub, vMult, vDiv, vMod, vLt, vGt, vEql, vOr, vAnd, vConcat, vTake, vDrop,
+  vApply, vApplyLazy, vApplyEager :: Value -> Value -> Value
 vAdd    (VInt n1) (VInt n2) = VInt (n1 + n2)
 vAdd     v1        v2       = verror "vAdd" "int int" [v1, v2]
 vSub    (VInt n1) (VInt n2) = VInt (n1 - n2)
@@ -95,6 +96,10 @@ vDrop   (VInt n) (VStr s) = VStr (BS.drop (fromIntegral n) s)
 vDrop    v1        v2     = verror "vTake" "int int" [v1, v2]
 vApply  (VFun f) v = f v
 vApply   f       v = verror "vApply" "fun value" [f, v]
+vApplyLazy (VFun f) v = f v
+vApplyLazy  f       v = verror "vApplyLazy" "fun value" [f, v]
+vApplyEager (VFun f) v = v `seq` f v
+vApplyEager  f       v = verror "vApplyEager" "fun value" [f, v]
 
 vIf :: Value -> Value -> Value -> Value
 vIf (VBool b) v1 v2 = if b then v1 else v2
@@ -142,6 +147,8 @@ eval = f IntMap.empty
                 Take    -> vTake
                 Drop    -> vDrop
                 Apply   -> vApply
+                ApplyLazy   -> vApplyLazy
+                ApplyEager  -> vApplyEager
     f env (EIf e1 e2 e3) = vIf (f env e1) (f env e2) (f env e3)
     f env (ELambda n e) = VFun (\x -> f (IntMap.insert n x env) e)
     f env (EVar n) = env IntMap.! n
