@@ -29,6 +29,7 @@ dependencies:
 - directory
 - filepath
 - process
+- stm
 - time
 
 ghc-options:

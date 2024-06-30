@@ -3,7 +3,7 @@
 module CommunicateIO where
 
 import qualified Data.ByteString.Char8 as B8
-import qualified Data.ByteString.Lazy.Char8 as L8
+-- import qualified Data.ByteString.Lazy.Char8 as L8
 import System.Process (readProcess)
 
 import Imports hiding (get)
@@ -12,22 +12,28 @@ import Expr
 import Pretty (pprInfix)
 
 communicateFile :: FilePath -> IO String
-communicateFile = (communicate_ =<<) . L8.readFile
+communicateFile = (communicateRaw =<<) . readFile
 
-communicate :: L8.ByteString -> IO Expr
-communicate req = either fail pure . parseExpr_ . B8.pack =<< communicate_ req
+communicateRaw :: String -> IO String
+communicateRaw s = readProcess "./api/comm.sh" [] s
 
-communicate_ :: L8.ByteString -> IO String
-communicate_ bs = readProcess "./api/comm.sh" [] (L8.unpack bs)
+communicate :: String -> IO String
+communicate s = communicateRaw . unwords . map B8.unpack . encode . EStr $ fromString s
 
-command :: String -> String -> IO Expr
-command cmd x = communicate $ L8.fromChunks $ encode $ EStr $ fromString $ cmd <> " " <> x
+communicateExpr :: String -> IO Expr
+communicateExpr s = either fail pure . parseExpr_ . B8.pack =<< communicate s
+
+command :: String -> [String] -> String
+command cmd args = unwords $ cmd : args
+
+getExpr :: String -> IO Expr
+getExpr arg = communicateExpr $ command "get" [arg]
 
 get :: String -> IO Expr
-get = command "get"
+get = getExpr
 
-get' :: String -> IO ()
-get' arg = do
+getPrint :: String -> IO ()
+getPrint arg = do
   expr <- get arg
   case expr of
     EStr s  -> B8.putStr s
@@ -37,7 +43,7 @@ getPpr :: String -> IO ()
 getPpr arg = putStrLn . pprInfix =<< get arg
 
 echo :: String -> IO Expr
-echo = command "echo"
+echo s = communicateExpr (command "echo" [s])
 
 solve :: String -> String -> IO Expr
-solve prob solution = command "solve" $ unwords [prob, solution]
+solve prob solution = communicateExpr (command "solve" [prob, solution])
