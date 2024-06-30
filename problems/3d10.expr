@@ -1,1 +1,11 @@
-EStr "# Input\n  A number `A` consisting of digits `1` (representing `(`), `2` (representing `)`), `3` (representing `[`) and `4` (representing `]`), at most `40` digits long.\n\n# Output\n  `1` if the parentheses from the input are properly balanced, and `0` otherwise.\n\n# Example\n  * `A = 134212`\n    `Answer = 1`\n  * `A = 1132`\n    `Answer = 0`\n"
+# Input
+  A number `A` consisting of digits `1` (representing `(`), `2` (representing `)`), `3` (representing `[`) and `4` (representing `]`), at most `40` digits long.
+
+# Output
+  `1` if the parentheses from the input are properly balanced, and `0` otherwise.
+
+# Example
+  * `A = 134212`
+    `Answer = 1`
+  * `A = 1132`
+    `Answer = 0`

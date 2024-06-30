@@ -1,1 +1,9 @@
-EStr "# Input\n  A number `A` consisting of digits `1` (representing `U`), `2` (representing `L`), `3` (representing `D`) and `4` (representing `R`), at most `100` digits long.\n\n# Output\n  The number of unique positions that are visited by the Lambdaman path represented by `A`.\n\n# Example\n  * `A = 33321411`\n    `Answer = 6`\n"
+# Input
+  A number `A` consisting of digits `1` (representing `U`), `2` (representing `L`), `3` (representing `D`) and `4` (representing `R`), at most `100` digits long.
+
+# Output
+  The number of unique positions that are visited by the Lambdaman path represented by `A`.
+
+# Example
+  * `A = 33321411`
+    `Answer = 6`
