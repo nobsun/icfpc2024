@@ -185,7 +185,7 @@ storeSolve pname solution solName = do
       rpath = solName <> "_" <> "result" <.> "txt"
   writeFile spath (solution <> "\n")
   writeExpr rpath rexpr
-  putStr $ exprString rexpr
+  putStrLn $ exprString rexpr
 
 ---
 
