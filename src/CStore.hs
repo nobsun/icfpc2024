@@ -114,6 +114,11 @@ writeExpr path expr = do
       writeFile path (show expr <> "\n")
   putStrLn "done."
 
+exprString :: Expr -> String
+exprString expr = case expr of
+  (EStr s)  ->  B8.unpack s
+  _         ->  show expr
+
 ---
 
 storeLangFile :: String -> FilePath -> IO ()
@@ -180,6 +185,7 @@ storeSolve pname solution solName = do
       rpath = solName <> "_" <> "result" <.> "txt"
   writeFile spath (solution <> "\n")
   writeExpr rpath rexpr
+  putStr $ exprString rexpr
 
 ---
 
