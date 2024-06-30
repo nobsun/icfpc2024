@@ -10,6 +10,8 @@ import Debug.Trace (trace)
 
 import Parser (parseExpr)
 import Expr
+
+($?) :: (Show p, Show a) => (p -> a) -> p -> a
 f $? x = let v = f x
              msg = "{- " ++ show x ++ " => " ++ show v ++ " -}\n\n"
          in trace msg v
@@ -25,12 +27,12 @@ evalExpr = eval [] 0
 
 eval :: Env -> BetaReductionCount -> Expr -> Either String (Env, BetaReductionCount, Expr)
 eval env brc e = case e of
-  EBool b -> Right (env, brc, e)
-  EInt i  -> Right (env, brc, e)
-  EStr s  -> Right (env, brc, e)
-  EUnary op e -> unary env brc op e
+  EBool _b  -> Right (env, brc, e)
+  EInt  _i  -> Right (env, brc, e)
+  EStr  _s  -> Right (env, brc, e)
+  EUnary op _e -> unary env brc op e
   EBinary op e1 e2 -> binary env brc op e1 e2
-  EIf c t e -> do
+  EIf c t _e -> do
     (_, brc', c') <- eval env brc c
     case c' of
       EBool True  -> eval env brc' t
@@ -80,7 +82,7 @@ binary env brc Sub e1 e2 = do
     (EInt i1, EInt i2) -> Right (env, brc'', EInt $ i1 - i2)
     _                  -> Left $ "Sub applied to non-integers: e1=" ++ show e1' ++ ",e2=" ++ show e2'
 binary env brc Mult e1 e2 = do
-  (_, brc',  e1') <- eval env brc e1
+  (_, _brc', e1') <- eval env brc e1
   (_, brc'', e2') <- eval env brc e2
   case (e1', e2') of
     (EInt i1, EInt i2) -> Right (env, brc'', EInt $ i1 * i2)
