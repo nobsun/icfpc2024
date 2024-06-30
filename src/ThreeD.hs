@@ -152,7 +152,7 @@ updatables bombs g = foldr phi [] ops
         xs = (Del <$> ss) <> (Upd <$> ts) <> (Ban <$> bs)
         ss :: [(Cell, Place)]
         ss = getSourceCells g cell
-        (ts, bs) = partition (\(x,_) -> Set.member x bombs) $ targets p c ss
+        (bs, ts) = partition (\(x,_) -> Set.member x bombs) $ targets p c ss
     ops :: [(Cell, Place)]
     ops = Hash.toList $ operators g
 
@@ -166,6 +166,7 @@ step bombs g = foldr phi (Nothing, g) upd
     phi (Ban (c, p)) (b, g') = (Just p, Hash.insert c p g')
     
     upd = updatables bombs g
+
 
 run :: Grid -> Space
 run g = unfoldr psi (0, g)
