@@ -51,6 +51,31 @@ writeFile' path cont = do
 
 ---
 
+catalogList :: [String]
+catalogList = [ "index", "echo", "language_test", "scoreboard" ]
+
+problemList :: [String]
+problemList =
+  [ "lambdaman"
+  , "spaceship"
+  , "3d"
+  , "efficiency"
+  ]
+
+_lambdamanProblems :: [String]
+_lambdamanProblems = [ "lambdaman" <> show n | n <- [1 .. 21 :: Int] ]
+
+_spaceshipProblems :: [String]
+_spaceshipProblems = [ "spaceship" <> show n | n <- [1 .. 25 :: Int] ]
+
+_3dProblems :: [String]
+_3dProblems = [ "3d" <> show n | n <- [1 .. 12 :: Int] ]
+
+_efficiencyProblems :: [String]
+_efficiencyProblems = [ "efficiency" <> show n | n <- [1 .. 14 :: Int] ]
+
+---
+
 storeLangFile :: String -> FilePath -> IO ()
 storeLangFile pname path = do
   putStrLn $ "geting " ++ pname ++ " ..."
@@ -74,29 +99,6 @@ delayedStoreLangList overwrite pns =
         () | not alreadyExist  -> write
            | overwrite         -> putStrLn ("already exists, but proceeding with overwrite mode: " ++ pname) *> write
            | otherwise         -> putStrLn ("already exists, skipping: " ++ path)
-
-catalogList :: [String]
-catalogList = [ "index", "echo", "language_test", "scoreboard" ]
-
-problemList :: [String]
-problemList =
-  [ "lambdaman"
-  , "spaceship"
-  , "3d"
-  , "efficiency"
-  ]
-
-_lambdamanProblems :: [String]
-_lambdamanProblems = [ "lambdaman" <> show n | n <- [1 .. 21 :: Int] ]
-
-_spaceshipProblems :: [String]
-_spaceshipProblems = [ "spaceship" <> show n | n <- [1 .. 25 :: Int] ]
-
-_3dProblems :: [String]
-_3dProblems = [ "3d" <> show n | n <- [1 .. 12 :: Int] ]
-
-_efficiencyProblems :: [String]
-_efficiencyProblems = [ "efficiency" <> show n | n <- [1 .. 14 :: Int] ]
 
 ---
 
