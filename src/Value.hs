@@ -20,7 +20,7 @@ module Value
   , vTake
   , vDrop
   , vApply
-  
+
   , vIf
 
   , exprToHaskellExpr
@@ -37,6 +37,13 @@ data Value
   | VInt !Integer
   | VStr BS.ByteString
   | VFun (Value -> Value)
+
+instance Show Value where
+  show v = case v of
+    VBool b  -> "VBool " ++ show b
+    VInt  i  -> "VInt "  ++ show i
+    VStr  s  -> "VStr "  ++ show s
+    VFun  _  -> "VFun {..}"
 
 vNeg :: Value -> Value
 vNeg (VInt x) = VInt (-x)
