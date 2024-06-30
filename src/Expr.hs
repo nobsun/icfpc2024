@@ -79,6 +79,8 @@ data BinOp
   | Take
   | Drop
   | Apply
+  | ApplyLazy
+  | ApplyEager
   deriving (Eq, Ord, Enum, Show, Read)
 
 
@@ -159,6 +161,8 @@ encodeBinOp Concat = "B."
 encodeBinOp Take   = "BT"
 encodeBinOp Drop   = "BD"
 encodeBinOp Apply  = "B$"
+encodeBinOp ApplyLazy   = "B~"
+encodeBinOp ApplyEager  = "B!"
 
 
 tokenIf :: Token
