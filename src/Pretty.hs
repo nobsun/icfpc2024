@@ -47,7 +47,7 @@ data PprFix
 type Cxt = (PprFix, Int)
 
 pprExpr :: Cxt -> Expr -> PPString
-pprExpr cx e0 = case e0 of
+pprExpr cx e0 = case toELambdaVars e0 of
   EBool b            -> pprBool b
   EInt i             -> pprNat i
   EStr s             -> pprStr s
