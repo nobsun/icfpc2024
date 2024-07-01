@@ -195,8 +195,8 @@ storeHaskSolve pname hsPath solName = do
   (solution, _cxt) <- either (fail . parseErr)  pure . Hask.parseExpr =<< readFile hsPath
   storeSolve pname solution solName
 
-usage :: IO ()
-usage =
+help :: IO ()
+help =
   putStr $ unlines
   [ "storeSolve :: String -> Expr -> String -> IO ()"
   , "storeSolve PROBLEM_NAME SOLUTION_EXPR SOLUTION_FILENAME"
