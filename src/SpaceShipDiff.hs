@@ -1,5 +1,6 @@
 module SpaceShipDiff where
 
+import qualified Data.ByteString.Char8 as B8
 import Data.Map.Strict (Map, (!))
 import qualified Data.Map.Strict as Map
 import System.Directory
@@ -7,6 +8,7 @@ import System.FilePath
 
 import Imports
 import Vec2
+import Expr (Expr' (EStr))
 import qualified CommunicateIO as Com
 
 solveNaiveAnProb :: FilePath -> IO ()
@@ -17,7 +19,7 @@ solveNaiveAnProb name = do
   when ex $ do
     ps <- parseAnProb name
     let failure _ = pure ()
-        success buttons = print =<< Com.solve name buttons
+        success buttons = print =<< Com.solve name (EStr $ B8.pack buttons)
     either failure success $ solveNaive ps
 
 parseAnProb :: FilePath -> IO [Pos]

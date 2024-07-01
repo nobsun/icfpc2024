@@ -51,5 +51,8 @@ getPpr arg = putStrLn . pprInfix =<< get arg
 echo :: String -> IO Expr
 echo s = communicateExpr (command "echo" [s])
 
-solve :: String -> String -> IO Expr
-solve prob solution = communicateExpr (command "solve" [prob, solution])
+solveCommand :: String -> Expr -> Expr
+solveCommand pname solution = EBinary Concat (EStr $ B8.pack $ "solve " <> pname <> " ") solution
+
+solve :: String -> Expr -> IO Expr
+solve prob solution = communicateExpr (solveCommand prob solution)
