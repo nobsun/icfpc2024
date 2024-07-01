@@ -14,6 +14,11 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
 * Haskell
 * Python
 
+## Tools
+
+* [Z3](https://github.com/Z3Prover/z3)
+* [GA-EAX-restart](https://github.com/senshineL/GA-EAX-restart)
+
 ## Usage
 
 * Place your token (e.g. `????????-????-????-????-????????????`) in `token.txt`.

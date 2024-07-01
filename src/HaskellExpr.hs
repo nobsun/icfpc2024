@@ -71,7 +71,7 @@ readable tag = lift $ Lib.Parser $ do
   input <- get
   case reads input of
     (x, cs):_  -> put cs $> x
-    []         -> raise_ $ "HaskICFP.readable: " ++ tag ++ ": parse error: '" ++ take 5 input ++ "..."
+    []         -> raise_ $ "HaskellExpr.readable: " ++ tag ++ ": parse error: '" ++ take 5 input ++ "'..."
 
 char' :: Char -> Parser Char
 char' c = satisfy (== c)
