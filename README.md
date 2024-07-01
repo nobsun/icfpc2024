@@ -25,4 +25,4 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
 
 ## Other Resources
 
-* [Japanese translation of task description](docs/tasks_ja.md)
+* [Japanese translation of task description](docs/task_ja.md)
