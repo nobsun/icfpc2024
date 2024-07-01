@@ -108,21 +108,21 @@ toELambdaVars = f
     f e@(EBool {})                           =  e
     f e@(EInt  {})                           =  e
     f e@(EStr  {})                           =  e
-    f   (EUnary op e)                        =  EUnary op (toELambdaVars e)
-    f   (EBinary op e1 e2)                   =  EBinary op (toELambdaVars e1) (toELambdaVars e2)
-    f   (EIf e1 e2 e3)                       =  EIf (toELambdaVars e1) (toELambdaVars e2) (toELambdaVars e3)
+    f   (EUnary op e)                        =  EUnary op (f e)
+    f   (EBinary op e1 e2)                   =  EBinary op (f e1) (f e2)
+    f   (EIf e1 e2 e3)                       =  EIf (f e1) (f e2) (f e3)
     f   (ELambda x e@(ELambda {}))           =  lambdas (x:) e
     f   (ELambda x e@(ELambdaVars {}))       =  lambdas (x:) e
-    f   (ELambda x e)                        =  (ELambdaVars [x] (toELambdaVars e))
+    f   (ELambda x e)                        =  (ELambdaVars [x] (f e))
     f   (ELambdaVars xs e@(ELambda {}))      =  lambdas (xs++) e
     f   (ELambdaVars xs e@(ELambdaVars {}))  =  lambdas (xs++) e
-    f   (ELambdaVars xs e)                   =  (ELambdaVars xs (toELambdaVars e))
-    f   (ELet bs e2)                         =  ELet [B ap x (toELambdaVars e1) | B ap x e1 <- bs] (toELambdaVars e2)
+    f   (ELambdaVars xs e)                   =  (ELambdaVars xs (f e))
+    f   (ELet bs e2)                         =  ELet [B ap x (f e1) | B ap x e1 <- bs] (f e2)
     f e@(EVar {})                            =  e
 
     lambdas xs (ELambda x e)       = lambdas (xs . (x:)) e
     lambdas xs (ELambdaVars ys e)  = lambdas (xs . (ys ++)) e
-    lambdas xs  e                  = ELambdaVars (xs []) (toELambdaVars e)
+    lambdas xs  e                  = ELambdaVars (xs []) (f e)
 
 type Var = Int
 
