@@ -48,6 +48,7 @@ for i in range(1, 26):
     trajectories = simulate(s)
     lines = zip(trajectories, trajectories[1:])
 
+    plt.gca().set_aspect('equal')
     plt.scatter([x for (x, y) in trajectories], [y for (x, y) in trajectories])
     plt.gca().add_collection(LineCollection(zip(trajectories, trajectories[1:])))
     plt.scatter([x for (x, y) in targets], [y for (x, y) in targets], label="target")
