@@ -134,8 +134,9 @@ initBy vals g = g'
 
 -- | ステップの無限列を生成するので停止させるのは外でやる (fst が Just になったら止める)
 steps :: Grid -> [(Maybe Int, Grid)]
-steps initGrid = unfoldr psi [(Nothing, initGrid)]
+steps initGrid = start:unfoldr psi [start]
   where
+    start = (Nothing, initGrid)
     psi :: [(Maybe Int, Grid)] -> Maybe ((Maybe Int, Grid), [(Maybe Int, Grid)])
     psi [] = error "unreachable!"
     psi hist@((_, g):_)
