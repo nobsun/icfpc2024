@@ -1,0 +1,18 @@
+_apz (\ itr -> 
+        _apz 
+            (_apz 
+                (_apz itr 25)
+                    (\ s -> _cat 
+                        (_apz (\ ir -> _apz 
+                                    (\ itr -> _cat 
+                                            (_apz (\ ir -> _apz (\ itr -> _apz (_apz (_apz itr 49) (\ s -> _cat "D" s)) "R") ir) itr)
+                                            (_apz (\ ir -> _apz (\ itr -> _apz (_apz (_apz itr 49) (\ s -> _cat "U" s)) "R") ir) itr))
+                                    ir)
+                              itr
+                        ) 
+                        s
+                  )
+            )
+            ""
+     ) 
+     (fix (\ f -> \ n -> \ g -> \ x -> _if (_eq n 0) x (_apz g (_apz (_apz (_apz f (_sub n 1)) g) x))))

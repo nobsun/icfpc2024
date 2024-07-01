@@ -14,6 +14,7 @@ import qualified HaskellExpr as Hask
 import qualified CommunicateIO as Comm
 import qualified CustomParser as Parser
 import qualified Pretty
+import Compress (compress)
 
 problemsDir :: FilePath
 problemsDir = "problems"
@@ -194,6 +195,19 @@ storeHaskSolve pname hsPath solName = do
   let parseErr = ("haskell-expr parse error: " ++)
   (solution, _cxt) <- either (fail . parseErr)  pure . Hask.parseExpr =<< readFile hsPath
   storeSolve pname solution solName
+
+storeCompressedSolve :: String -> FilePath -> IO ()
+storeCompressedSolve pname solName = do
+  let s1path = "solutions" </> pname </> "sol1.txt"
+  cont <- B8.readFile s1path
+  storeSolve pname (compress cont) ("solutions" </> pname </> solName)
+
+storeCompressedSolveList :: String -> [String] -> IO ()
+storeCompressedSolveList solName pns = mapM_ action pns
+  where
+    action pname = do
+      storeCompressedSolve pname solName
+      threadDelay (3 * 1000 * 1000)
 
 help :: IO ()
 help =

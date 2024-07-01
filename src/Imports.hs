@@ -2,6 +2,7 @@
 
 module Imports
   ( module Control.Applicative
+  , module Control.Arrow
   , module Control.Monad
   , module Control.Monad.Trans
   , module Control.Monad.Except
@@ -23,6 +24,7 @@ module Imports
   ) where
 
 import Control.Applicative
+import Control.Arrow (first, second, (***), (&&&))
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Except

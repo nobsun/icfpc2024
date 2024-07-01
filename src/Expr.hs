@@ -96,11 +96,11 @@ deSugar e@(EVar {})                 = e
 -----
 
 {- |
--- >>> e3 = ELambda 1 (ELambda 2 (ELambda 3 (EInt 1))) :: Expr
--- >>> toELambdaVars e3
--- ELambdaVars [1,2,3] (EInt 1)
--- >>> toELambdaVars (EBinary Apply (EBinary Apply e3 4) 5)
--- EBinary Apply (EBinary Apply ELambdaVars [1,2,3] (EInt 1))
+>>> e3 = ELambda 1 (ELambda 2 (ELambda 3 (EInt 1))) :: Expr
+>>> toELambdaVars e3
+ELambdaVars [1,2,3] (EInt 1)
+>>> toELambdaVars (EBinary Apply (EBinary Apply e3 (EInt 4)) (EInt 5))
+EBinary Apply (EBinary Apply (ELambdaVars [1,2,3] (EInt 1)) (EInt 4)) (EInt 5)
  -}
 toELambdaVars :: Expr' a -> Expr' a
 toELambdaVars = f
