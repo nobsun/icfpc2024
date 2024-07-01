@@ -6,7 +6,7 @@ module Pretty where
 
 import qualified Data.ByteString.Char8 as B8
 
-import Imports hiding (And)
+import Imports hiding (And, ap)
 import Expr
 
 newtype PPString = PPS (Endo String) deriving (Semigroup, Monoid)
@@ -77,6 +77,7 @@ pprExpr cx e0 = case toELambdaVars e0 of
   EIf e1 e2 e3       -> pprIf cx e1 e2 e3
   ELambda v e        -> pprLambda cx v e
   ELambdaVars vs e   -> pprLambdaVars cx vs e
+  ELet bs e          -> pprLet cx bs e
   EVar v             -> pprVar v
 
 pprBool :: PPOutput -> Bool -> PPString
@@ -156,6 +157,17 @@ pprLambda cx v e = pprLambdaVars cx [v] e
 
 pprLambdaVars :: Cxt -> [Var] -> Expr -> PPString
 pprLambdaVars cx vs e = selectOp (ppOutput cx) "λ" "\\" <+> unwordspp (map pprVar vs) <+> "->" <+> pprExpr cx e
+
+pprLet :: Cxt -> [Binding ByteString] -> Expr -> PPString
+pprLet cx bs e2 =
+  "\n" <>
+  foldr (<>) (pprExpr cx e2)
+  [ indent <> "let" <+> pprBan ap <> pprVar v <+> "=" <+> pprExpr cx e1 <+> "in\n" | B ap v e1 <- bs ]
+  where indent = pps $ replicate (ppIfIndent cx) ' '
+
+pprBan :: IsString a => BinOp -> a
+pprBan ApplyEager  = "!"
+pprBan _           = ""
 
 pprVar :: Var -> PPString
 pprVar v = "v" <> showpp v

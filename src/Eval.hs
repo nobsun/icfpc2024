@@ -43,7 +43,8 @@ eval env brc e = case e of
       EBool False -> eval env brc' e
       _           -> Left "If condition is not a boolean"
   ELambda v b -> Right (env, brc, ELambda v b) -- TODO
-  ELambdaVars {} -> Left "apply after `unELambdaVars`"
+  ELambdaVars {} -> Left "Eval.eval: apply `deSugar` before this func"
+  ELet {}        -> Left "Eval.eval: apply `deSugar` before this func"
   EVar v      -> maybe (Left msg) (eval env brc) $ lookup v env
     where
       msg = "Variable " ++ show v ++ " not found"

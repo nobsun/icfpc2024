@@ -115,7 +115,8 @@ exprToHaskellExpr = ($ "") . f
     f (EBinary op e1 e2) = showParen True $ showString ("v" ++ show op ++ " ") . f e1 . showString " " . f e2
     f (EIf e1 e2 e3) = showParen True $ showString "vIf " . f e1 . showString " " . f e2 . showString " " . f e3
     f (ELambda x e) = showParen True $ showString "VFun " . (showParen True $ showString ("\\x"  ++ show x) . showString " -> " . f e)
-    f e@(ELambdaVars {}) = f (unELambdaVars e)
+    f e@(ELambdaVars {})  = f (deSugar e)
+    f e@(ELet {})         = f (deSugar e)
     f (EVar x) = showString ("x" ++ show x)
 
 eval :: Expr -> Value
@@ -155,4 +156,14 @@ eval = f IntMap.empty
     f env (ELambdaVars [] e) = f env e  {- not reach -}
     f env (ELambdaVars [n] e) = VFun (\x -> f (IntMap.insert n x env) e)
     f env (ELambdaVars (n:ns) e) = VFun (\x -> f (IntMap.insert n x env) (ELambdaVars ns e))
+    f env (ELet [] e) = f env e  {- not reach -}
+    f env (ELet [B ap n e1] e2)     = letApply ap (VFun (\x -> f (IntMap.insert n x env) e2))           (f env e1)
+    f env (ELet (B ap n e1:bs) e2)  = letApply ap (VFun (\x -> f (IntMap.insert n x env) (ELet bs e2))) (f env e1)
     f env (EVar n) = env IntMap.! n
+
+letApply :: BinOp -> Value -> Value -> Value
+letApply ap = case ap of
+    Apply       -> vApply
+    ApplyLazy   -> vApplyLazy
+    ApplyEager  -> vApplyEager
+    _           -> verror "ELet" "Apply ApplyLazy ApplyEager" [ap]

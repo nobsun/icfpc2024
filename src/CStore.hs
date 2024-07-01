@@ -10,6 +10,7 @@ import Text.Read (readMaybe)
 import Imports
 import Expr (Expr' (EStr), Expr)
 import qualified Expr
+import qualified HaskellExpr as Hask
 import qualified CommunicateIO as Comm
 import qualified CustomParser as Parser
 import qualified Pretty
@@ -187,6 +188,33 @@ storeSolve pname solution solName = do
   writeFile spath (show solution <> "\n")
   writeExpr rpath rexpr
   putStrLn $ exprString rexpr
+
+storeHaskSolve :: String -> FilePath -> String -> IO ()
+storeHaskSolve pname hsPath solName = do
+  let parseErr = ("haskell-expr parse error: " ++)
+  (solution, _cxt) <- either (fail . parseErr)  pure . Hask.parseExpr =<< readFile hsPath
+  storeSolve pname solution solName
+
+help :: IO ()
+help =
+  putStr $ unlines
+  [ "storeSolve :: String -> Expr -> String -> IO ()"
+  , "storeSolve PROBLEM_NAME SOLUTION_EXPR SOLUTION_FILENAME"
+  , ""
+  , "   submit Expr solution and write solution and result to files."
+  , ""
+  , "   example:"
+  , "   ghci> storeSolve \"lambdaman1\" (EStr \"LLL\") \"sol3\""
+  , ""
+  , "storeHaskSolve :: String -> FilePath -> String -> IO ()"
+  , "storeHaskSolve PROBLEM_NAME HASKELL_FILENAME SOLUTION_FILENAME"
+  , ""
+  , "   submit solution converted from Haskell and write solution and result to files."
+  , ""
+  , "   example:"
+  , "   ghci> storeHaskSolve \"lambdaman8\" \"scripts/smallexpr.txt\") \"sol3\""
+  , ""
+  ]
 
 ---
 
