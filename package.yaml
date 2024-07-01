@@ -61,6 +61,7 @@ library:
   - SpaceShip
   - SpaceShipDiff
   - ThreeD
+  - SmallICFPLang
   other-modules: []
   generated-other-modules: Paths_icfpc2024
   dependencies:
