@@ -2,6 +2,8 @@
 
 This is Team Sampou's repository for the [ICFP Programming Contest 2024](https://icfpcontest2024.github.io/).
 
+![](banner.png)
+
 ## Members
 
 * [Katsutoshi Itoh](https://github.com/cutsea110)
