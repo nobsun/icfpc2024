@@ -47,7 +47,7 @@ token :: WParser w w
 token = Parser $ do
   input <- get
   case input of
-    []    -> raise_ "CustomParser.token: no more inputs"
+    []    -> raise_ "ParserLib.token: no more inputs"
     w:ws  -> put ws $> w
 
 eof :: Show w => WParser w ()
@@ -55,7 +55,7 @@ eof = Parser $ do
   input <- get
   case input of
     []    -> pure ()
-    _:_   -> raise_ $ "CustomParser.eof: not empty, rest of inputs: " ++ show (take 3 input) ++ " ..."
+    _:_   -> raise_ $ "ParserLib.eof: not empty, rest of inputs: " ++ show (take 10 input) ++ " ..."
 
 satisfy :: (w -> Bool) -> WParser w w
 satisfy p = do
