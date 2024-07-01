@@ -24,6 +24,7 @@ import qualified Data.Map as Map
 
 import Imports hiding (And)
 import Expr
+import qualified Expr
 import ParserLib hiding (Parser, raise, satisfy, token, eof, runParser, parse)
 import qualified ParserLib as Lib
 
@@ -71,7 +72,7 @@ readable tag = lift $ Lib.Parser $ do
   input <- get
   case reads input of
     (x, cs):_  -> put cs $> x
-    []         -> raise_ $ "HaskellExpr.readable: " ++ tag ++ ": parse error: '" ++ take 5 input ++ "'..."
+    []         -> raise_ $ "HaskellExpr.readable: " ++ tag ++ ": parse error: '" ++ take 30 input ++ "'..."
 
 char' :: Char -> Parser Char
 char' c = satisfy (== c)
@@ -96,7 +97,7 @@ string s = spaces *> mapM char' s
 ---
 
 parseExpr :: String -> Either String (Expr, Cxt)
-parseExpr = parse (rExpr <* spaces <* eof)
+parseExpr input = first Expr.deSugar <$> parse (rExpr <* spaces <* eof) input
 
 {- $setup
 >>> testp p s = fst <$> parse p s
@@ -108,6 +109,7 @@ rExpr = asum
     , rUnary
     , rBinary
     , rIf
+    , rLet
     {- , rLambda -}
     , rLambdaVars
     , rAtom
@@ -213,7 +215,11 @@ hvchars = ['a'..'z']
 vchars = hvchars ++ ['_'] ++ ['0'..'9'] ++ ['A'..'Z']
 
 rVarName :: Parser String
-rVarName = spaces *> ( (:) <$> satisfy (`elem` hvchars) <*> many (satisfy (`elem` vchars )) )
+rVarName = do
+  spaces
+  name <- (:) <$> satisfy (`elem` hvchars) <*> many (satisfy (`elem` vchars ))
+  guard $ name `notElem` ["fix", "let", "in"]
+  pure name
 
 rArg :: Parser Var
 rArg = do
@@ -223,6 +229,16 @@ rArg = do
         let newMap = Map.insert name nextVar varMap
         put cx{varMap = newMap, nextVar = succ nextVar} $> nextVar
   maybe newVar pure $ Map.lookup name varMap
+
+{- |
+>>> testp rLet "let x = _add 3 1 in \nlet y = _mult 4 5 in\n _add x y"
+Right (ELet [B ApplyLazy 1 (EBinary Add (EInt 3) (EInt 1)),B ApplyLazy 2 (EBinary Mult (EInt 4) (EInt 5))] (EBinary Add (EVar 1) (EVar 2)))
+ -}
+rLet1 :: Parser (Binding ByteString)
+rLet1 = string "let" *> (Expr.B ApplyLazy <$> rArg <* char '=' <*> rExpr <* string "in")
+
+rLet :: Parser (Expr' ByteString)
+rLet = ELet <$> some rLet1 <*> rExpr
 
 -- rLambda = undefined
 {- |
