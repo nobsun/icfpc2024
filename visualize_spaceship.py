@@ -41,17 +41,27 @@ for i in range(1, 26):
             x, y = line.split()
             targets.append((int(x), int(y)))
 
-    if not (Path("solutions") / prob_id / "sol1.txt").exists():
-        continue
-    s = (Path("solutions") / prob_id / "sol1.txt").read_text()
+    dir = Path("solutions") / prob_id
 
-    trajectories = simulate(s)
-    lines = zip(trajectories, trajectories[1:])
+    for sol_path in dir.glob("sol*.txt"):
+        if not (sol_path).exists():
+            continue
+        if sol_path.stem.endswith("_result"):
+            continue
 
-    plt.gca().set_aspect('equal')
-    plt.scatter([x for (x, y) in trajectories], [y for (x, y) in trajectories])
-    plt.gca().add_collection(LineCollection(zip(trajectories, trajectories[1:])))
-    plt.scatter([x for (x, y) in targets], [y for (x, y) in targets], label="target")
-    plt.legend()
-    plt.savefig((Path("solutions") / prob_id / "sol1.png"))
-    plt.clf()
+        png_path = dir / (sol_path.stem + ".png")
+        if png_path.exists():
+            continue
+
+        s = sol_path.read_text()
+
+        trajectories = simulate(s)
+        lines = zip(trajectories, trajectories[1:])
+
+        plt.gca().set_aspect('equal')
+        plt.scatter([x for (x, y) in trajectories], [y for (x, y) in trajectories])
+        plt.gca().add_collection(LineCollection(zip(trajectories, trajectories[1:])))
+        plt.scatter([x for (x, y) in targets], [y for (x, y) in targets], label="target")
+        plt.legend()
+        plt.savefig(png_path)
+        plt.clf()
