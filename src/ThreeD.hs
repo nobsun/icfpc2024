@@ -326,6 +326,47 @@ sample = Hash.fromList [ ((0,1), Number 5) -- x
 
 {- | Grid Layout
   0 1 2 3 4 5 6 7 8
+0 . . . . B . . . .
+1 . 0 > . = . . . .
+2 . v 1 . . > . . .
+3 . . + . . . + S .
+4 . . . . . ^ . . .
+5 . . v . . A > . .
+6 . . . . . . 0 + .
+7 . 1 @ 6 . . < . .
+8 . . 3 . 0 @ 3 . .
+9 . . . . . 3 . . .
+-}
+add :: Grid
+add = Hash.fromList [ ((4,0), Var 'B')
+                    , ((1,1), Number 0)
+                    , ((2,1), Operator (Move R))
+                    , ((4,1), Operator (Judge Eql))
+                    , ((1,2), Operator (Move D))
+                    , ((2,2), Number 1)
+                    , ((5,2), Operator (Move R))
+                    , ((2,3), Operator (Calc Add))
+                    , ((6,3), Operator (Calc Add))
+                    , ((7,3), Submit)
+                    , ((5,4), Operator (Move U))
+                    , ((2,5), Operator (Move D))
+                    , ((5,5), Var 'A')
+                    , ((6,5), Operator (Move R))
+                    , ((6,6), Number 0)
+                    , ((7,6), Operator (Calc Add))
+                    , ((1,7), Number 1)
+                    , ((2,7), Operator Warp)
+                    , ((3,7), Number 6)
+                    , ((6,7), Operator (Move L))
+                    , ((2,8), Number 3)
+                    , ((4,8), Number 0)
+                    , ((5,8), Operator Warp)
+                    , ((6,8), Number 3)
+                    , ((5,9), Number 3)
+                    ]
+
+{- | Grid Layout
+  0 1 2 3 4 5 6 7 8
 0 . . . . 0 . . . .
 1 . B > . = . . . .
 2 . v 1 . . > . . .
@@ -337,8 +378,49 @@ sample = Hash.fromList [ ((0,1), Number 5) -- x
 8 . . 3 . 0 @ 3 . .
 9 . . . . . 3 . . .
 -}
-game :: Grid
-game = Hash.fromList [ ((4,0), Number 0)
+mul :: Grid
+mul = Hash.fromList [ ((4,0), Number 0)
+                    , ((1,1), Var 'B')
+                    , ((2,1), Operator (Move R))
+                    , ((4,1), Operator (Judge Eql))
+                    , ((1,2), Operator (Move D))
+                    , ((2,2), Number 1)
+                    , ((5,2), Operator (Move R))
+                    , ((2,3), Operator (Calc Sub))
+                    , ((6,3), Operator (Calc Add))
+                    , ((7,3), Submit)
+                    , ((5,4), Operator (Move U))
+                    , ((2,5), Operator (Move D))
+                    , ((5,5), Number 0)
+                    , ((6,5), Operator (Move R))
+                    , ((6,6), Var 'A')
+                    , ((7,6), Operator (Calc Add))
+                    , ((1,7), Number 1)
+                    , ((2,7), Operator Warp)
+                    , ((3,7), Number 6)
+                    , ((6,7), Operator (Move L))
+                    , ((2,8), Number 3)
+                    , ((4,8), Number 0)
+                    , ((5,8), Operator Warp)
+                    , ((6,8), Number 3)
+                    , ((5,9), Number 3)
+                    ]
+
+{- | Grid Layout
+  0 1 2 3 4 5 6 7 8
+0 . . . . 0 . . . .
+1 . B > . = . . . .
+2 . v 1 . . > . . .
+3 . . - . . . + S .
+4 . . . . . ^ . . .
+5 . . v . . 1 > . .
+6 . . . . . . A * .
+7 . 1 @ 6 . . < . .
+8 . . 3 . 0 @ 3 . .
+9 . . . . . 3 . . .
+-}
+expr :: Grid
+expr = Hash.fromList [ ((4,0), Number 0)
                      , ((1,1), Var 'B')
                      , ((2,1), Operator (Move R))
                      , ((4,1), Operator (Judge Eql))
@@ -350,10 +432,10 @@ game = Hash.fromList [ ((4,0), Number 0)
                      , ((7,3), Submit)
                      , ((5,4), Operator (Move U))
                      , ((2,5), Operator (Move D))
-                     , ((5,5), Number 0)
+                     , ((5,5), Number 1)
                      , ((6,5), Operator (Move R))
                      , ((6,6), Var 'A')
-                     , ((7,6), Operator (Calc Add))
+                     , ((7,6), Operator (Calc Mul))
                      , ((1,7), Number 1)
                      , ((2,7), Operator Warp)
                      , ((3,7), Number 6)
@@ -364,3 +446,4 @@ game = Hash.fromList [ ((4,0), Number 0)
                      , ((6,8), Number 3)
                      , ((5,9), Number 3)
                      ]
+
