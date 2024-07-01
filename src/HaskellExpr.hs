@@ -96,7 +96,11 @@ string s = spaces *> mapM char' s
 ---
 
 parseExpr :: String -> Either String (Expr, Cxt)
-parseExpr = parse (rExpr <* eof)
+parseExpr = parse (rExpr <* spaces <* eof)
+
+{- $setup
+>>> testp p s = fst <$> parse p s
+ -}
 
 rExpr :: Parser Expr
 rExpr = asum
@@ -115,15 +119,21 @@ rAtom = char '(' *> rExpr <* char ')'
 rBool ,rInt ,rStr ,rUnary ,rBinary ,rIf, {- rLambda, -}
   rLambdaVars, rVar :: Parser Expr
 
-{-
->>> fst <$> parse rBool "True"
-True
+{- |
+>>> testp rBool "True"
+Right (EBool True)
+>>> testp rInt "123"
+Right (EInt 123)
+>>> testp rStr "\" foo bar baz \""
+Right (EStr " foo bar baz ")
  -}
 rBool = EBool <$> readable @Bool "EBool"
 rInt  = EInt  <$> readable @Integer "EInt"
 rStr  = EStr . B8.pack <$> readable @String "EStr"
 rUnary = EUnary <$> rUOp <*> rExpr
 
+{- |
+ -}
 rUOp :: Parser UOp
 rUOp = asum [ rNeg, rNot, rS2I, rI2S ]
 rNeg, rNot, rS2I, rI2S :: Parser UOp
@@ -192,8 +202,7 @@ rArg = do
   maybe newVar pure $ Map.lookup name varMap
 
 -- rLambda = undefined
-{-
->>>
+{- |
  -}
 rLambdaVars = ELambdaVars <$> ((char '\\') *> some rArg <* string "->") <*> rExpr
 
