@@ -9,3 +9,15 @@
     `Answer = 1`
   * `A = 3123`
     `Answer = 0`
+
+
+-- palindrome
+
+(x, result) <- (A, 0)
+while x != 0:
+  (x, result) <- (x / 10, result * 10 + (x rem 10))
+if A == result:
+  return True
+else:
+  return False
+      

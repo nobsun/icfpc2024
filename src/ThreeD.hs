@@ -11,15 +11,15 @@ import qualified Data.Map as Map
 import Data.Maybe (fromJust, mapMaybe, isJust, isNothing)
 import qualified Data.Set as Set
 
-data Direction = L | R | U | D deriving (Show, Eq)
-data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq)
-data Logic = Eql | Neq deriving (Show, Eq)
+data Direction = L | R | U | D deriving (Show, Eq, Ord)
+data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq, Ord)
+data Logic = Eql | Neq deriving (Show, Eq, Ord)
 
 data Op3D = Move  !Direction
           | Calc  !Arith
           | Judge !Logic
           | Warp
-          deriving (Show, Eq)
+          deriving (Show, Eq, Ord)
 
 calc :: Arith -> Place -> Place -> Place
 calc Add  (Number x) (Number y) = Number (x+y)
@@ -43,7 +43,7 @@ data Place = Operator !Op3D
            | Number   !Int
            | Submit
            | Var !Char  -- 'A' and 'B' only
-           deriving (Show, Eq)
+           deriving (Show, Eq, Ord)
 
 isOperator :: Place -> Bool
 isOperator (Operator _) = True
@@ -74,7 +74,7 @@ vars g = map (f . swap) $ Hash.toList vs
 data Update = Erase ![(Cell, Place)]
             | Write ![(Cell, Place)]
             | TimeWarp !Tick !(Cell, Place)
-            deriving (Show, Eq)
+            deriving (Show, Eq, Ord)
 
 -- 各オペレータの更新動作アクション
 operate :: Grid -> (Cell, Place) -> [Update]
@@ -157,7 +157,7 @@ steps initGrid = start:unfoldr psi [start]
         ops = Hash.toList $ operators g
 
         upds :: [Update]
-        upds = concatMap (operate g) ops
+        upds = sort $ concatMap (operate g) ops
 
         wrs :: [Update]
         wrs = filter f upds
