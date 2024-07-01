@@ -11,6 +11,13 @@ import qualified Data.Map as Map
 import Data.Maybe (fromJust, mapMaybe, isJust, isNothing)
 import qualified Data.Set as Set
 
+import Debug.Trace (trace)
+
+($?) :: (Show a, Show b) => (a -> b) -> a -> b
+f $? x = let v = f x
+             msg = "{- "++ show x ++ " => " ++ show v ++ " -}"
+          in trace msg v
+
 data Direction = L | R | U | D deriving (Show, Eq, Ord)
 data Arith = Add | Sub | Mul | Quot | Rem deriving (Show, Eq, Ord)
 data Logic = Eql | Neq deriving (Show, Eq, Ord)
@@ -146,12 +153,12 @@ steps initGrid = start:unfoldr psi [start]
       | not (null warps)           = let r = (Nothing, timewarp) in Just (r, r:hist)
       | otherwise                  = let r = (retVal, g') in Just (r, r:hist)
       where
-        g' = foldr phi g upds
+        g' = foldl phi g upds
           where
-            phi :: Update -> Grid -> Grid
-            phi (Erase cs) h = foldr (Hash.delete . fst) h cs
-            phi (Write cs) h = foldr (uncurry Hash.insert) h cs
-            phi (TimeWarp _ _) h = h -- NOTE: submit の時には何もしない
+            phi :: Grid -> Update -> Grid
+            phi h (Erase cs) = foldr (Hash.delete . fst) h cs
+            phi h (Write cs) = foldr (uncurry Hash.insert) h cs
+            phi h (TimeWarp _ _) = h -- NOTE: submit の時には何もしない
 
         ops :: [(Cell, Place)]
         ops = Hash.toList $ operators g
