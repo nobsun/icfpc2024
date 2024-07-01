@@ -1,7 +1,22 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module HaskellExpr where
+module HaskellExpr
+  ( parseExpr
+  , dumpVars
+
+  --
+  , Parser, parse, parse', runParser
+  --
+  , rExpr, rAtom
+  , rBool,  rInt, rStr
+  , rUnary, rBinary
+  , rArg, rLambdaVars, rVar
+  -----
+  , raise, token, eof, satisfy
+  , readable, char, string
+  , spaces, spaces1
+  ) where
 
 import qualified Data.ByteString.Char8 as B8
 import Data.Map (Map)
@@ -9,7 +24,7 @@ import qualified Data.Map as Map
 
 import Imports hiding (And)
 import Expr
-import ParserLib hiding (Parser, raise, satisfy, token, eof, runParser)
+import ParserLib hiding (Parser, raise, satisfy, token, eof, runParser, parse)
 import qualified ParserLib as Lib
 
 
@@ -27,6 +42,15 @@ runParser p icx input = Lib.runParser (runStateT p icx) input
 
 icontext :: Cxt
 icontext = Cxt Map.empty 1
+
+parse' :: Parser a -> String -> Either String ((a, Cxt), String)
+parse' p = runParser p icontext
+
+parse :: Parser a -> String -> Either String (a, Cxt)
+parse p input = fst <$> parse' p input
+
+dumpVars :: (a, Cxt) -> [(String, Var)]
+dumpVars = Map.toList . varMap . snd
 
 ---
 
@@ -71,6 +95,9 @@ string s = spaces *> mapM char' s
 
 ---
 
+parseExpr :: String -> Either String (Expr, Cxt)
+parseExpr = parse (rExpr <* eof)
+
 rExpr :: Parser Expr
 rExpr = asum
     [ rUnary
@@ -88,6 +115,10 @@ rAtom = char '(' *> rExpr <* char ')'
 rBool ,rInt ,rStr ,rUnary ,rBinary ,rIf, {- rLambda, -}
   rLambdaVars, rVar :: Parser Expr
 
+{-
+>>> fst <$> parse rBool "True"
+True
+ -}
 rBool = EBool <$> readable @Bool "EBool"
 rInt  = EInt  <$> readable @Integer "EInt"
 rStr  = EStr . B8.pack <$> readable @String "EStr"
