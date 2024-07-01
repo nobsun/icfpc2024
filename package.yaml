@@ -50,6 +50,7 @@ library:
   - Expr
   - Parser
   - ParserLib
+  - HaskellExpr
   - CustomParser
   - Pretty
   - Eval
