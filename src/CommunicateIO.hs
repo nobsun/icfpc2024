@@ -17,14 +17,17 @@ communicateFile = (communicateRaw =<<) . readFile
 communicateRaw :: String -> IO String
 communicateRaw s = readProcess "./api/comm.sh" [] s
 
-communicate :: String -> IO String
-communicate s = communicateRaw . unwords . map B8.unpack . encode . EStr $ fromString s
+communicate :: Expr -> IO String
+communicate expr = communicateRaw . unwords . map B8.unpack $ encode expr
 
-communicateExpr :: String -> IO Expr
-communicateExpr s = either fail pure . parseExpr_ . B8.pack =<< communicate s
+communicateExpr :: Expr -> IO Expr
+communicateExpr expr = either fail pure . parseExpr_ . B8.pack =<< communicate expr
 
-command :: String -> [String] -> String
-command cmd args = unwords $ cmd : args
+exprStr :: String -> Expr
+exprStr = EStr . fromString
+
+command :: String -> [String] -> Expr
+command cmd args = exprStr $ unwords $ cmd : args
 
 getExpr :: String -> IO Expr
 getExpr arg = communicateExpr $ command "get" [arg]
