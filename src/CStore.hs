@@ -212,7 +212,7 @@ help =
   , "   submit solution converted from Haskell and write solution and result to files."
   , ""
   , "   example:"
-  , "   ghci> storeHaskSolve \"lambdaman8\" \"scripts/smallexpr.txt\") \"sol3\""
+  , "   ghci> storeHaskSolve \"lambdaman8\" \"scripts/smallexpr.txt\" \"sol3\""
   , ""
   ]
 
