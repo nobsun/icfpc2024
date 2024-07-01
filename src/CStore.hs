@@ -9,6 +9,7 @@ import Text.Read (readMaybe)
 
 import Imports
 import Expr (Expr' (EStr), Expr)
+import qualified Expr
 import qualified CommunicateIO as Comm
 import qualified CustomParser as Parser
 import qualified Pretty
@@ -178,12 +179,12 @@ storePPR pname = do
       putStrLn $ "writing " ++ path ++ " ..."
       writeFile' path (ppr expr)
 
-storeSolve :: String -> String -> String -> IO ()
+storeSolve :: String -> Expr -> String -> IO ()
 storeSolve pname solution solName = do
   rexpr <- Comm.solve pname solution
   let spath = solName <.> "txt"
       rpath = solName <> "_" <> "result" <.> "txt"
-  writeFile spath (solution <> "\n")
+  writeFile spath (show solution <> "\n")
   writeExpr rpath rexpr
   putStrLn $ exprString rexpr
 
