@@ -45,8 +45,8 @@ _lmbd8F = \ f -> \ m ds ls us rs ->
     _if (_eq m 0)
         (_cat ds ls)
         (_apz (_if (_eq (_rem m 2) 1) 
-                   (\ rc -> _cat (_cat ds ls) rc)
-                   (\ rc -> _cat (_cat us rs) rc))
+                   (\ rc -> _cat (_cat us rs) rc)
+                   (\ rc -> _cat (_cat ds ls) rc))
               (_apz (_apz (_apz (_apz (_apz f (_sub m 1)) (_cat "DD" ds)) (_cat "LL" ls)) (_cat "UU" us)) (_cat "RR" rs)))
 
 _lmbd8 :: Integer -> [Char] -> [Char] -> [Char] -> [Char] -> [Char]
