@@ -21,7 +21,17 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
 
 ## Usage
 
+* Install [the Haskell Tool Stack](https://docs.haskellstack.org/en/stable/)
 * Place your token (e.g. `????????-????-????-????-????????????`) in `token.txt`.
+* `stack repl`
+* Show scoreboard, etc.
+  * `> cat "scoreboard"`
+* Submit solution
+  * `> submitSolution "lambdaman1" "LLLDURRRUDRRURR"`
+
+## Solutions
+
+Our solution files are available under [solutions/](solutions/).
 
 ## Other Resources
 
