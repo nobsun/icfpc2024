@@ -23,11 +23,18 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
 
 * Install [the Haskell Tool Stack](https://docs.haskellstack.org/en/stable/)
 * Place your token (e.g. `????????-????-????-????-????????????`) in `token.txt`.
-* `stack repl`
-* Show scoreboard, etc.
-  * `> cat "scoreboard"`
-* Submit solution
-  * `> submitSolution "lambdaman1" "LLLDURRRUDRRURR"`
+* `stack repl`  
+  * Show scoreboard, etc.
+    * `> cat "scoreboard"`
+  * Submit solution
+    * `> submitSolution "lambdaman1" "LLLDURRRUDRRURR"`
+  * Simulate a 3D program.
+    * `> ThreeD.readProblem "3d1/sol1.txt" >>= \prob -> ThreeD.runAndDrawWith' [('A', 2), ('B', 3)] prob`
+* Replay lambda man solution:
+  * `$ stack runhaskel -- scripts/lambdaman.hs 3 sol1.txt`
+    * `3` is a problem number
+    * `sol1.txt` is a solution file name under `solutions/lambdamanX/`
+  * Press `ENTER` to step execution
 
 ## Solutions
 
