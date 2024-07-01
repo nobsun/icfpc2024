@@ -64,16 +64,29 @@ _ndusr :: Integer -> [a] -> [a] -> [a]
 _ndusr = \ n -> \ lr -> \ du -> _apz (_apz (_apz _iter n) (\ s -> _cat du s)) lr
 
 _dsr :: [Char]
-_dsr = _apz (_apz (_apz _iter 49) (\ s -> _cat "D" s)) "R"
+_dsr = _apz _dsr' _iter
+_dsr' = \ ir -> _apz (\ itr -> _apz (_apz (_apz itr 49) (\ s -> _cat "D" s)) "R") ir
+
 
 _usr :: [Char]
-_usr = _apz (_apz (_apz _iter 49) (\ s -> _cat "U" s)) "R"
+_usr = _apz _usr' _iter
+_usr' = \ir -> _apz (\ itr -> _apz (_apz (_apz itr 49) (\ s -> _cat "U" s)) "R") ir
 
 _downup :: [Char]
-_downup = _cat _dsr _usr
+_downup = _apz _downup' _iter 
+_downup' = \ ir -> _apz (\ itr -> _cat (_dsr' itr) (_usr' itr)) ir
 
 -- lambdaman9
-_lambdaman9 = _iter 25 (\ s -> _cat _downup s) ""
+-- _lambdaman9 
+--     = _apz (_apz (_apz (fix _iterF) 
+--                        25)
+--                  (\ s -> _cat _downup s))
+--            ""
+_lambdaman9 
+    = _apz (\ itr -> _apz (_apz (_apz itr 25)
+                 (\ s -> _cat (_apz (\ ir -> _apz (\ itr -> _cat ((\ ir -> _apz (\ itr -> _apz (_apz (_apz itr 49) (\ s -> _cat "D" s)) "R") ir) itr) ((\ir -> _apz (\ itr -> _apz (_apz (_apz itr 49) (\ s -> _cat "U" s)) "R") ir) itr)) ir) itr) s))
+           "") (fix (\ f -> \ n -> \ g -> \ x -> _if (_eq n 0) x (_apz g (_apz (_apz (_apz f (_sub n 1)) g) x))))
+
 
 {- --
 
