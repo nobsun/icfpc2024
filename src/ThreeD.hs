@@ -109,7 +109,7 @@ operate g ((x, y), Operator (Judge op)) = maybe [] f r -- =, #
         r = do { p' <- p; q' <- q; return (judge op p' q', p', q') }
         f (c, a, b)
           | c = [ Erase [((x-1, y), a), ((x, y-1), b)]
-                , Write [((x+1, y), a), ((x, y+1), b)]]
+                , Write [((x+1, y), b), ((x, y+1), a)]]
           | otherwise = []
 operate g ((x, y), Operator Warp) = maybe [] f dr -- @
   where dx = Hash.lookup (x-1, y) g
