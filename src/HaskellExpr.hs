@@ -10,7 +10,7 @@ module HaskellExpr
   --
   , rExpr, rAtom
   , rBool,  rInt, rStr
-  , rUnary, rBinary
+  , rFix, rUnary, rBinary
   , rArg, rLambdaVars, rVar
   -----
   , raise, token, eof, satisfy
@@ -104,7 +104,8 @@ parseExpr = parse (rExpr <* spaces <* eof)
 
 rExpr :: Parser Expr
 rExpr = asum
-    [ rUnary
+    [ rFix
+    , rUnary
     , rBinary
     , rIf
     {- , rLambda -}
@@ -116,7 +117,7 @@ rAtom :: Parser Expr
 rAtom = char '(' *> rExpr <* char ')'
     <|> asum [rBool, rInt, rStr, rVar]
 
-rBool ,rInt ,rStr ,rUnary ,rBinary ,rIf, {- rLambda, -}
+rBool ,rInt ,rStr, rFix, rUnary ,rBinary ,rIf, {- rLambda, -}
   rLambdaVars, rVar :: Parser Expr
 
 {- |
@@ -130,9 +131,31 @@ Right (EStr " foo bar baz ")
 rBool = EBool <$> readable @Bool "EBool"
 rInt  = EInt  <$> readable @Integer "EInt"
 rStr  = EStr . B8.pack <$> readable @String "EStr"
+
+appExpr :: Expr' a -> Expr' a -> Expr' a
+appExpr e1 e2 = EBinary ApplyLazy e1 e2
+
+{- (\ v1 -> (\ v2 -> v1 (v2 v2)) (\ v2 -> v1 (v2 v2))) -}
+{- |
+>>> yai
+ELambdaVars [1] (EBinary ApplyLazy (ELambdaVars [2] (EBinary ApplyLazy (EVar 1) (EBinary ApplyLazy (EVar 2) (EVar 2)))) (ELambdaVars [2] (EBinary ApplyLazy (EVar 1) (EBinary ApplyLazy (EVar 2) (EVar 2)))))
+ -}
+yai :: Expr' a
+yai = ELambdaVars [1] (appExpr c1 c1)
+  where c1 = ELambdaVars [2] $ appExpr (EVar 1) (appExpr (EVar 2) (EVar 2))
+
+{- |
+>>> testp rFix "fix (\\f n -> _ap f n)"
+Right (EBinary ApplyLazy (ELambdaVars [1] (EBinary ApplyLazy (ELambdaVars [2] (EBinary ApplyLazy (EVar 1) (EBinary ApplyLazy (EVar 2) (EVar 2)))) (ELambdaVars [2] (EBinary ApplyLazy (EVar 1) (EBinary ApplyLazy (EVar 2) (EVar 2)))))) (ELambdaVars [1,2] (EBinary ApplyLazy (EVar 1) (EVar 2))))
+>>> testp rUnary "_neg (_add 2 3)"
+Right (EUnary Neg (EBinary Add (EInt 2) (EInt 3)))
+ -}
+rFix = string "fix" *> (appExpr yai <$> rAtom)
 rUnary = EUnary <$> rUOp <*> rExpr
 
 {- |
+>>> testp rUOp "_neg"
+Right Neg
  -}
 rUOp :: Parser UOp
 rUOp = asum [ rNeg, rNot, rS2I, rI2S ]
