@@ -7,6 +7,9 @@ module SpaceShip
   , solveNaive'
 
   , solveNearbySorted
+
+  , parse
+  , render
   ) where
 
 import Data.Function (on)
@@ -43,6 +46,9 @@ parse s =  [ p
                        [x,y] -> (x, y)
                        xs    -> error ("not pair: " ++ show xs)
            ]
+
+render :: Problem -> String
+render prob = unlines [show x ++ " " ++ show y | (x,y) <- prob]
 
 solveNaive :: Problem -> String
 solveNaive prob = map ((moveToChar Map.!) . fst) $ solveNaive' prob
