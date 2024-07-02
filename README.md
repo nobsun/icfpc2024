@@ -38,7 +38,7 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
     * `sol1.txt` is a solution file name under `solutions/lambdamanX/`
   * Press `ENTER` to step execution
 * Hand made solution recorder for lambdaman:
-  * `$ stack runhaskell -- scripts/lambdaman2.hs 3
+  * `$ stack runhaskell -- scripts/lambdaman2.hs 3`
     * `3` is a problem number
     * solution is overwritten into `solutions/lambdamanX/solv.txt`
   * `$ stack runhaskell -- scripts/lambdaman2.hs 3 < `*some-solution-file*
