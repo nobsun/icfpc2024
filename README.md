@@ -40,7 +40,7 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
 * Hand made solution recorder for lambdaman:
   * `$ stack runhaskell -- scripts/lambdaman2.hs 3`
     * `3` is a problem number
-    * solution is overwritten into `solutions/lambdamanX/solv.txt`
+    * Your playing will record as a solution, which is overwritten into `solutions/lambdamanX/solv.txt`
   * `$ stack runhaskell -- scripts/lambdaman2.hs 3 < `*some-solution-file*
     * replay *some-solution-file* and overwirte `solutions/lambdamanX/solv.txt`
 
