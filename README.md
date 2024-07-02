@@ -33,10 +33,16 @@ This is Team Sampou's repository for the [ICFP Programming Contest 2024](https:/
   * Simulate a 3D program.
     * `> ThreeD.readProblem "3d1/sol1.txt" >>= \prob -> ThreeD.runAndDrawWith' [('A', 2), ('B', 3)] prob`
 * Replay lambda man solution:
-  * `$ stack runhaskel -- scripts/lambdaman.hs 3 sol1.txt`
+  * `$ stack runhaskell -- scripts/lambdaman.hs 3 sol1.txt`
     * `3` is a problem number
     * `sol1.txt` is a solution file name under `solutions/lambdamanX/`
   * Press `ENTER` to step execution
+* Hand made solution recorder for lambdaman:
+  * `$ stack runhaskell -- scripts/lambdaman2.hs 3
+    * `3` is a problem number
+    * solution is overwritten into `solutions/lambdamanX/solv.txt`
+  * `$ stack runhaskell -- scripts/lambdaman2.hs 3 < `*some-solution-file*
+    * replay *some-solution-file* and overwirte `solutions/lambdamanX/solv.txt`
 
 ## Solutions
 
