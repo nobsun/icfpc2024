@@ -6,6 +6,7 @@
 module Main where
 
 import Data.Array
+import Data.Bool
 import Data.List
 import Data.Maybe
 import System.Environment
@@ -20,7 +21,6 @@ main = do
     ; movs <- readFile movs
     ; putStr cls
     ; drawUniv (lines board)
-    ; putStrLn movs
     ; lambdaMan (board, movs)
     }
 
@@ -57,7 +57,7 @@ initGame (b,ms) cs = case lines b of
             ij       -> case divMod ij w of
                 (i,j)    -> Game 
                     { controls  = cs
-                    , universe  = listArray ((1,1),(h,w)) (concat cs)
+                    , universe  = listArray ((1,1),(h,w)) (concat ls)
                     , dimension = (h,w)
                     , moves     = ms
                     , position  = (i', j')
@@ -94,14 +94,14 @@ step g = case controls g of
                               ++ goto (succ h,1)
                     }
                     where
-                        (i',j') = move (h,w) m (i,j)
+                        (i',j') = move (universe g) (h,w) m (i,j)
 
-move :: Dim -> Char -> Pos -> Pos
-move (h,w) c (i,j) = case c of
-    'L' | 1 < j -> (i, pred j)
-    'R' | j < w -> (i, succ j)
-    'U' | 1 < i -> (pred i, j)
-    'D' | i < h -> (succ i, j)
+move :: Univ -> Dim -> Char -> Pos -> Pos
+move univ (h,w) c (i,j) = case c of
+    'L' | 1 < j -> bool (i,j) (i, pred j) (univ ! (i, pred j) /= '#')
+    'R' | j < w -> bool (i,j) (i, succ j) (univ ! (i, succ j) /= '#')
+    'U' | 1 < i -> bool (i,j) (pred i, j) (univ ! (pred i, j) /= '#')
+    'D' | i < h -> bool (i,j) (succ i, j) (univ ! (succ i, j) /= '#')
     _           -> (i,j)
 -- -}
 
@@ -120,4 +120,3 @@ lambdaman2 =
     ,".##..#"
     ,"....##"
     ]
-
